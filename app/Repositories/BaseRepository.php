@@ -2,8 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Interfaces\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
+use App\Repositories\Interfaces\BaseRepositoryInterface;
 
 class BaseRepository implements BaseRepositoryInterface
 {
@@ -29,15 +29,16 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->model->create($data);
     }
 
-    public function update($id, array $data)
+    public function update(array $data, $id)
     {
-        $model = $this->model->findOrFail($id);
-        $model->update($data);
-        return $model;
+        $record = $this->find($id);
+        $record->update($data);
+        return $record;
     }
 
     public function delete($id)
     {
-        return $this->model->findOrFail($id)->delete();
+        $record = $this->find($id);
+        return $record->delete();
     }
 }
