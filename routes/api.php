@@ -14,9 +14,9 @@ Route::prefix('v1')->group(function () {
     Route::resource('ledgers', LedgerController::class);
     Route::apiResource('users', UserController::class);
     Route::apiResource('customers', CustomerController::class);
-    Route::apiResource('sales', SaleController::class);
-    Route::apiResource('purchases', PurchaseController::class);
-    Route::apiResource('expenses', ExpenseController::class);
+    // Route::apiResource('sales', SaleController::class);
+    // Route::apiResource('purchases', PurchaseController::class);
+    // Route::apiResource('expenses', ExpenseController::class);
 
 });
 

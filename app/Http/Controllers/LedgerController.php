@@ -19,10 +19,10 @@ class LedgerController extends Controller
         $this->ledgerService = $ledgerService;
     }
 
-    public function index()
+    public function index(LedgerRequest $request)
     {
         try {
-            $ledger = $this->ledgerService->all();
+            $ledger = $this->ledgerService->findAll($request->validated());
             // $ledger = $this->ledgerService->with('customer')->get();
 
             return $this->success($ledger);
