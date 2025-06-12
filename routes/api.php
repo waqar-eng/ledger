@@ -1,6 +1,5 @@
 <?php
 
-// use App\Http\Controllers\CapitalinvestmentController;
 use App\Http\Controllers\LedgerController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -12,6 +11,7 @@ use App\Http\Controllers\ExpenseController;
 
 Route::prefix('v1')->group(function () {
     Route::resource('ledgers', LedgerController::class);
+    Route::get('/ledgers/report', [LedgerController::class, 'report']);
     Route::apiResource('users', UserController::class);
     Route::apiResource('customers', CustomerController::class);
     // Route::apiResource('sales', SaleController::class);

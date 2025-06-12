@@ -74,7 +74,17 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
         $ledger = Ledger::create($request);
 
-
+        switch($request['ledger_type']){
+            case 'sale':
+                Sale::create(['ledger_id' => $ledger->id]);
+                break;
+            case 'expense':
+                Expense::create(['ledger_id' =>$ledger->id]);
+                break;
+            case 'purchase':
+                Purchase::create(['ledger_id' => $ledger->id]);
+                break;
+        }
         return $ledger;
     }
 }

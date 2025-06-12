@@ -34,6 +34,8 @@ class LedgerRequest extends FormRequest
             case 'GET':
                 return $getRules;
             case 'POST':
+            case 'PUT':
+            case 'PATCH':
                 return $postRules;
             default:
                 return $getRules;

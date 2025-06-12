@@ -23,8 +23,6 @@ class LedgerController extends Controller
     {
         try {
             $ledger = $this->ledgerService->findAll($request->validated());
-            // $ledger = $this->ledgerService->with('customer')->get();
-
             return $this->success($ledger);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
