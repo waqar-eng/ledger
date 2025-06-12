@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Ledger\LedgerRequest;
+use App\Http\Requests\LedgerRequest;
 use App\Services\Interfaces\LedgerServiceInterface;
 use App\Traits\ApiResponseTrait;
+use Exception;
 
 class LedgerController extends Controller
 {
@@ -18,33 +19,53 @@ class LedgerController extends Controller
         $this->ledgerService = $ledgerService;
     }
 
-    public function index()
+    public function index(LedgerRequest $request)
     {
-        $ledger = $this->ledgerService->all();
-        return $this->success($ledger);
+        try {
+            $ledger = $this->ledgerService->findAll($request->validated());
+            return $this->success($ledger);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
     }
 
     public function store(LedgerRequest $request)
     {
-        $user = $this->ledgerService->create($request->validated());
-        return $this->success($user, 'User created successfully', 201);
+        try {
+           $user = $this->ledgerService->create($request->validated());
+            return $this->success($user, 'ledger created successfully', 201);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
     }
 
     public function show($id)
     {
-        $user = $this->ledgerService->find($id);
-        return $this->success($user);
+        try {
+            $user = $this->ledgerService->find($id);
+            return $this->success($user);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
     }
 
     public function update(LedgerRequest $request, $id)
     {
-        $user = $this->ledgerService->update($request->validated(), $id);
-        return $this->success($user, 'User updated successfully');
+        try {
+            $user = $this->ledgerService->update($request->validated(), $id);
+            return $this->success($user, 'ledger updated successfully');
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
     }
 
     public function destroy($id)
     {
-        $this->ledgerService->delete($id);
-        return $this->success(null, 'User deleted successfully');
+        try {
+            $this->ledgerService->delete($id);
+            return $this->success(null, 'ledger deleted successfully');
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
     }
 }

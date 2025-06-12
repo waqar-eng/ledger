@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\Interfaces\BaseRepositoryInterface;
 use App\Services\Interfaces\BaseServiceInterface;
+use Exception;
 
 class BaseService implements BaseServiceInterface
 {
@@ -16,26 +17,46 @@ class BaseService implements BaseServiceInterface
 
     public function all()
     {
-        return $this->repository->all();
+        try {
+            return $this->repository->all();
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
     public function find($id)
     {
-        return $this->repository->find($id);
+        try {
+            return $this->repository->find($id);
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
     public function create(array $data)
     {
-        return $this->repository->create($data);
+        try {
+            return $this->repository->create($data);
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
     public function update(array $data, $id)
     {
-        return $this->repository->update($data, $id);
+        try {
+            return $this->repository->update($data, $id);
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
     public function delete($id)
     {
-        return $this->repository->delete($id);
+        try {
+            return $this->repository->delete($id);
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 }
