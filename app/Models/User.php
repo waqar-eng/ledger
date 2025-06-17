@@ -43,4 +43,7 @@ class User extends Authenticatable
 
     public const LOGIN_SUCCESS="Login successfully";
     public const LOGIN_ERROR="Login un-successfully";
+    public const USER_CREATED='User created successfully';
+    public const USER_UPDATED='User updated successfully';
+    public const USER_DELETED="User deleted successfully";
 }

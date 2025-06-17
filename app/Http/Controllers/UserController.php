@@ -35,7 +35,7 @@ class UserController extends Controller
     {
         try {
             $user = $this->userService->create($request->validated());
-            return $this->success($user, 'User created successfully', 201);
+            return $this->success($user, User::USER_CREATED, 201);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -55,7 +55,7 @@ class UserController extends Controller
     {
         try {
             $user = $this->userService->update($request->validated(), $id);
-            return $this->success($user, 'User updated successfully');
+            return $this->success($user, User::USER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -65,7 +65,7 @@ class UserController extends Controller
     {
         try {
             $this->userService->delete($id);
-            return $this->success(null, 'User deleted successfully');
+            return $this->success(null, User::USER_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

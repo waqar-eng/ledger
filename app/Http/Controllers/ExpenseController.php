@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\Interfaces\ExpenseServiceInterface;
 use App\Traits\ApiResponseTrait;
 use App\Http\Requests\ExpenseRequest;
+use App\Models\Expense;
 use Illuminate\Http\Request;
 use Exception;
 
@@ -34,7 +35,7 @@ class ExpenseController extends Controller
     {
         try {
             $expense = $this->expenseService->create($request->all());
-            return $this->success($expense, 'Expense created successfully');
+            return $this->success($expense, Expense::EXPENSE_CREATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -54,7 +55,7 @@ class ExpenseController extends Controller
     {
         try {
             $expense = $this->expenseService->update($request->all(), $id);
-            return $this->success($expense, 'Expense updated successfully');
+            return $this->success($expense, Expense::EXPENSE_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -64,7 +65,7 @@ class ExpenseController extends Controller
     {
         try {
             $this->expenseService->delete($id);
-            return $this->success(null, 'Expense deleted successfully');
+            return $this->success(null, Expense::EXPENSE_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

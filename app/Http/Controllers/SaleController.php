@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Services\Interfaces\SaleServiceInterface;
 use App\Traits\ApiResponseTrait;
 use App\Http\Requests\SaleRequest; //  correct
+use App\Models\Sale;
 use Illuminate\Http\Request;
 
 use Exception;
@@ -38,7 +39,7 @@ class SaleController extends Controller
     {
         try {
             $sale = $this->saleService->create($request->all());
-            return $this->success($sale, 'Sale created successfully');
+            return $this->success($sale, Sale::SALE_CREATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -58,7 +59,7 @@ class SaleController extends Controller
     {
         try {
             $sale = $this->saleService->update($request->all(), $id);
-            return $this->success($sale, 'Sale updated successfully');
+            return $this->success($sale, Sale::SALE_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -68,7 +69,7 @@ class SaleController extends Controller
     {
         try {
             $this->saleService->delete($id);
-            return $this->success(null, 'Sale deleted successfully');
+            return $this->success(null, Sale::SALE_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

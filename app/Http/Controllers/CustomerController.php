@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
+use App\Models\Customer;
 use App\Services\Interfaces\CustomerServiceInterface;
 use App\Traits\ApiResponseTrait;
 use Exception;
@@ -33,7 +34,7 @@ class CustomerController extends Controller
     {
         try {
             $customer = $this->customerService->create($request->validated());
-            return $this->success($customer, 'Customer created successfully', 201);
+            return $this->success($customer, Customer::CUSTOMER_CREATED, 201);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -53,7 +54,7 @@ class CustomerController extends Controller
     {
         try {
             $customer = $this->customerService->update($request->validated(), $id);
-            return $this->success($customer, 'Customer updated successfully');
+            return $this->success($customer, Customer::CUSTOMER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -63,7 +64,7 @@ class CustomerController extends Controller
     {
         try {
             $this->customerService->delete($id);
-            return $this->success(null, 'Customer deleted successfully');
+            return $this->success(null, CUSTOMER::CUSTOMER_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

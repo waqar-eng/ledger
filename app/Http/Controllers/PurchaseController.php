@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PurchaseRequest;
+use App\Models\Purchase;
 use App\Services\Interfaces\PurchaseServiceInterface;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class PurchaseController extends Controller
     {
         try {
             $purchase = $this->purchaseService->create($request->all());
-            return $this->success($purchase, 'Purchase created successfully');
+            return $this->success($purchase, Purchase::PURCHASE_CREATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -55,7 +56,7 @@ class PurchaseController extends Controller
     {
         try {
             $purchase = $this->purchaseService->update($request->all(), $id);
-            return $this->success($purchase, 'Purchase updated successfully');
+            return $this->success($purchase, Purchase::PURCHASE_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -65,7 +66,7 @@ class PurchaseController extends Controller
     {
         try {
             $this->purchaseService->delete($id);
-            return $this->success(null, 'Purchase deleted successfully');
+            return $this->success(null, Purchase::PURCHASE_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

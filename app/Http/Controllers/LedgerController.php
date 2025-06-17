@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LedgerRequest;
+use App\Models\Ledger;
 use App\Services\Interfaces\LedgerServiceInterface;
 use App\Traits\ApiResponseTrait;
 use Exception;
@@ -33,7 +34,7 @@ class LedgerController extends Controller
     {
         try {
            $user = $this->ledgerService->create($request->validated());
-            return $this->success($user, 'ledger created successfully', 201);
+            return $this->success($user, Ledger::LEDGER_CREATED, 201);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -53,7 +54,7 @@ class LedgerController extends Controller
     {
         try {
             $user = $this->ledgerService->update($request->validated(), $id);
-            return $this->success($user, 'ledger updated successfully');
+            return $this->success($user, Ledger::LEDGER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -63,7 +64,7 @@ class LedgerController extends Controller
     {
         try {
             $this->ledgerService->delete($id);
-            return $this->success(null, 'ledger deleted successfully');
+            return $this->success(null, Ledger::LEDGER_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
