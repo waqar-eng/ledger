@@ -33,4 +33,7 @@ class Customer extends Model
             ->useLogName('customer')
             ->setDescriptionForEvent(fn(string $eventName) => "Customer has been {$eventName}");
     }
+    public const CUSTOMER_CREATED ='Customer created successfully';
+    public const CUSTOMER_UPDATED ='Customer updated successfully';
+    public const CUSTOMER_DELETED ='Customer deleted successfully';
 }

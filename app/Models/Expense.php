@@ -12,4 +12,7 @@ class Expense extends Model
     return $this->belongsTo(Ledger::class);
 }
 
+   public const EXPENSE_CREATED = 'Expense created successfully';
+   public const EXPENSE_UPDATED = 'Expense updated successfully';
+   public const EXPENSE_DELETED = 'Expense deleted successfully';
 }

@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\AppEnum;
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Validation\Rule;
 class LedgerRequest extends FormRequest
 {
     public function authorize()
@@ -15,11 +16,11 @@ class LedgerRequest extends FormRequest
     {
         $postRules = [
             'description' => 'required|string|max:255',
-            'amount' => 'required|integer',
-            'type' => 'required|in:credit,debit',
+            AppEnum::Amount->value => 'required|integer',
+            'type' => ['required' ,Rule::in([AppEnum::Credit->value , AppEnum::Debit->value])],
             'date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
-            'ledger_type' => 'required|in:sale,expense,purchase', // Add this
+            'ledger_type' => ['required' , Rule::in([AppEnum::Sale, AppEnum::Expense, AppEnum::Purchase])]
         ];
         $getRules = [
             'start_date' => 'nullable|date|required_with:end_date',
@@ -27,8 +28,9 @@ class LedgerRequest extends FormRequest
             'customer_id'  => 'nullable|integer|exists:customers,id',
             'search_term'  => 'nullable|string',
             'per_page'  => 'nullable|integer',
-            'ledger_type' => 'nullable|in:sale,expense,purchase', // Add this
-            'type' => 'nullable|in:credit,debit',
+           'ledger_type' => ['required' , Rule::in([AppEnum::Sale, AppEnum::Expense, AppEnum::Purchase])],
+            'type' => ['required' ,Rule::in([AppEnum::Credit->value , AppEnum::Debit->value])]
+
         ];
         switch ($this->method()) {
             case 'GET':
@@ -47,13 +49,13 @@ class LedgerRequest extends FormRequest
             $type = $this->input('type');
             $ledgerType = $this->input('ledger_type');
 
-            if ($ledgerType == 'purchase' && $type !== 'debit') {
+            if ($ledgerType == AppEnum::Purchase && $type !== AppEnum::Debit) {
                 $validator->errors()->add('type', 'Purchase should be debit');
             }
-            if ($ledgerType == 'sale' && $type !== 'credit') {
+            if ($ledgerType == AppEnum::Sale && $type !== AppEnum::Credit) {
                 $validator->errors()->add('type', 'Sale should be credit');
             }
-            if ($ledgerType == 'expense' && $type !== 'debit') {
+            if ($ledgerType == AppEnum::Expense && $type !== AppEnum::Debit) {
                 $validator->errors()->add('type', 'Expense should be debit');
             }
         });

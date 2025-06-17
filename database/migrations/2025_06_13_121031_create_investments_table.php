@@ -1,5 +1,6 @@
 <?php
 
+use App\AppEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,8 +15,8 @@ return new class extends Migration
         Schema::create('investments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('type', ['opening', 'additional', 'withdrawal']);
-            $table->integer('amount');
+            $table->enum('type', [AppEnum::Opening, AppEnum::Additional, AppEnum::Withdrawal]);
+            $table->integer(AppEnum::Amount);
             $table->date('date')->default(now());
             $table->timestamps();
         });

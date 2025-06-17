@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\AppEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,13 +20,13 @@ class InvestmentRequest extends FormRequest
             'user_id' => ['required', 'exists:users,id'],
             'type' => [
                 'required',
-                Rule::in(['opening', 'additional', 'withdrawal']),
+                Rule::in([AppEnum::Opening, AppEnum::Additional, AppEnum::Withdrawal]),
                 Rule::unique('investments')->where(function ($query) use ($userId) {
                     return $query->where('user_id', $userId)
-                                ->where('type', 'opening'); 
+                                ->where('type', AppEnum::Opening); 
                 })
             ],
-            'amount' => 'required|integer|min:1',
+            AppEnum::Amount->value => 'required|integer|min:1',
             'date' => 'required|date',
         ];
         switch ($this->method()) {

@@ -58,4 +58,7 @@ public function expense()
 
 public const LOW_BALANCE_ERROR= "Insufficient balance to perform debit transaction";
 
+public const LEDGER_CREATED= "Ledger created successfully";
+public const LEDGER_UPDATED= "Ledger updated successfully";
+public const LEDGER_DELETED= "Ledger deleted successfully";
 }

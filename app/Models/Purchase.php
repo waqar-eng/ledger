@@ -13,4 +13,7 @@ class Purchase extends Model
     return $this->belongsTo(Ledger::class);
 }
 
+   public const PURCHASE_CREATED = 'Purchase created successfully';
+   public const PURCHASE_UPDATED = 'Purchase updated successfully';
+   public const PURCHASE_DELETED = 'Purchase deleted successfully';
 }

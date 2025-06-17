@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\AppEnum;
 use App\Constants\AppConstants;
 use App\Repositories\Interfaces\LedgerRepositoryInterface;
 use App\Services\Interfaces\LedgerServiceInterface;
@@ -64,13 +65,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
         //Step 2: Calculate new total amount based on type
         $newTotal = match ($request['type']) {
-            'credit' => $previousTotal + $amount,
-            'debit'  => $previousTotal - $amount,
+            AppEnum::Credit => $previousTotal + $amount,
+            AppEnum::Debit  => $previousTotal - $amount,
             default  => $previousTotal,
         };
         $newTotal;
 
-        if ($newTotal <= 0 && $request['type'] == 'debit') {
+        if ($newTotal <= 0 && $request['type'] == AppEnum::Debit) {
             return response()->json([
                 'message' => Ledger::LOW_BALANCE_ERROR
             ], 400);
@@ -81,13 +82,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $ledger = Ledger::create($request);
 
         switch($request['ledger_type']){
-            case 'sale':
+            case AppEnum::Sale:
                 Sale::create(['ledger_id' => $ledger->id]);
                 break;
-            case 'expense':
+            case AppEnum::Expense:
                 Expense::create(['ledger_id' =>$ledger->id]);
                 break;
-            case 'purchase':
+            case AppEnum::Purchase:
                 Purchase::create(['ledger_id' => $ledger->id]);
                 break;
         }
