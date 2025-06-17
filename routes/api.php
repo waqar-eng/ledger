@@ -1,12 +1,10 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\LedgerController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\SaleController;
-use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvestmentController;
 
 Route::prefix('v1')->group(function () {
@@ -22,6 +20,7 @@ Route::prefix('v1')->group(function () {
     // Route::apiResource('purchases', PurchaseController::class);
     // Route::apiResource('expenses', ExpenseController::class);
     Route::resource('investment', InvestmentController::class);
+    Route::apiResource('/activity-logs', ActivityLogController::class);
 
 });
 
