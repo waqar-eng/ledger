@@ -64,7 +64,7 @@ class CustomerController extends Controller
     {
         try {
             $this->customerService->delete($id);
-            return $this->success(null, CUSTOMER::CUSTOMER_DELETED);
+            return $this->success(null, Customer::CUSTOMER_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

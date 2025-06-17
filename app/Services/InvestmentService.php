@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\AppEnum;
 use App\Models\Investment;
 use App\Models\Ledger;
 use App\Repositories\Interfaces\InvestmentRepositoryInterface;
@@ -18,7 +19,7 @@ class InvestmentService extends BaseService implements InvestmentServiceInterfac
     }
     public function create($request)
     {
-        $amount = $request['amount']; 
+        $amount = $request[AppEnum::Amount->value]; 
         $type = $request['type']; // withdrawal, additional, opening
 
         //Step 1: Get previous total from Ledger
@@ -26,28 +27,28 @@ class InvestmentService extends BaseService implements InvestmentServiceInterfac
         $previousTotal = $latestLedger?->total_amount ?? 0;
         //Step 2: Determine new total
         $newTotal = match ($type) {
-            'withdrawal' => $previousTotal - $amount,
-            'opening', 'additional' => $previousTotal + $amount,
+            AppEnum::Withdrawal => $previousTotal - $amount,
+            AppEnum::Opening, AppEnum::Additional => $previousTotal + $amount,
             default => $previousTotal,
         };
-        $type= $previousTotal>0 ? $type : 'opening';
-        if ($type == 'withdrawal' && $newTotal <= 0) {
+        $type= $previousTotal>0 ? $type : AppEnum::Opening;
+        if ($type == AppEnum::Withdrawal && $newTotal <= 0) {
             return response()->json([
                 'message' => 'Insufficient balance for withdrawal'
             ], 400);
         }
         //Step 3: Determine Ledger's Type
         $ledgerType = match ($type) {
-            'withdrawal' => 'debit',
-            'opening', 'additional' => 'credit',
-            default => 'credit',
+            AppEnum::Withdrawal => AppEnum::Debit,
+            AppEnum::Opening, AppEnum::Additional => AppEnum::Credit,
+            default => AppEnum::Credit,
         };
 
 
         //Step 4: Create Investment first
          $commonData = [
             'type' => $type,
-            'amount' => $amount,
+            AppEnum::Amount->value => $amount,
             'user_id' => $request['user_id'],
             'date' => $request['date'],
         ];
