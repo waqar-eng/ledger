@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
+use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Traits\ApiResponseTrait;
 use Exception;
@@ -65,6 +66,20 @@ class UserController extends Controller
         try {
             $this->userService->delete($id);
             return $this->success(null, 'User deleted successfully');
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+    public function login(Request $request)
+    {
+        try {
+            $token = $this->userService->loginUser($request);
+            if($token) {
+                return $this->success(['token' => $token], User::LOGIN_SUCCESS);
+            }
+            else{
+                return $this->error(User::LOGIN_ERROR, 500);
+            }
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

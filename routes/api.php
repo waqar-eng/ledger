@@ -7,9 +7,13 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ExpenseController;
-
+use App\Http\Controllers\InvestmentController;
 
 Route::prefix('v1')->group(function () {
+    Route::post('/login', [UserController::class, 'login']);
+    Route::middleware('auth:api')->group(function () {
+
+    });
     Route::resource('ledgers', LedgerController::class);
     Route::get('/ledgers/report', [LedgerController::class, 'report']);
     Route::apiResource('users', UserController::class);
@@ -17,6 +21,7 @@ Route::prefix('v1')->group(function () {
     // Route::apiResource('sales', SaleController::class);
     // Route::apiResource('purchases', PurchaseController::class);
     // Route::apiResource('expenses', ExpenseController::class);
+    Route::resource('investment', InvestmentController::class);
 
 });
 
