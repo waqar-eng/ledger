@@ -56,5 +56,6 @@ public function expense()
     return $this->hasOne(Expense::class);
 }
 
+public const LOW_BALANCE_ERROR= "Insufficient balance to perform debit transaction";
 
 }

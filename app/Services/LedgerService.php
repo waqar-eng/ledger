@@ -48,7 +48,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             ->when(!empty($ledger_type), function ($query) use ($ledger_type) {
                 $query->where('ledger_type', $ledger_type);
             })
-            ->paginate($per_page);
+            ->orderBy('id',"desc")->paginate($per_page);
     }
 
 
@@ -69,6 +69,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             default  => $previousTotal,
         };
         $newTotal;
+
+        if ($newTotal <= 0 && $request['type'] == 'debit') {
+            return response()->json([
+                'message' => Ledger::LOW_BALANCE_ERROR
+            ], 400);
+        }
 
         $request['total_amount'] = $newTotal;
 

@@ -40,6 +40,12 @@ use App\Services\PurchaseService;
 use App\Repositories\Interfaces\PurchaseRepositoryInterface;
 use App\Repositories\PurchaseRepository;
 
+// investment
+use App\Services\Interfaces\InvestmentServiceInterface;
+use App\Services\InvestmentService;
+use App\Repositories\Interfaces\InvestmentRepositoryInterface;
+use App\Repositories\InvestmentRepository;
+
 class AppServiceProvider extends ServiceProvider
 {
     public function register()
@@ -67,5 +73,9 @@ class AppServiceProvider extends ServiceProvider
         // Purchase
         $this->app->bind(PurchaseServiceInterface::class, PurchaseService::class);
         $this->app->bind(PurchaseRepositoryInterface::class, PurchaseRepository::class);
+        
+        // Purchase
+        $this->app->bind(InvestmentServiceInterface::class, InvestmentService::class);
+        $this->app->bind(InvestmentRepositoryInterface::class, InvestmentRepository::class);
     }
 }

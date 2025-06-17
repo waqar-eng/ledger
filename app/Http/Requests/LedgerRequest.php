@@ -41,4 +41,21 @@ class LedgerRequest extends FormRequest
                 return $getRules;
         }
     }
+    protected function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $type = $this->input('type');
+            $ledgerType = $this->input('ledger_type');
+
+            if ($ledgerType == 'purchase' && $type !== 'debit') {
+                $validator->errors()->add('type', 'Purchase should be debit');
+            }
+            if ($ledgerType == 'sale' && $type !== 'credit') {
+                $validator->errors()->add('type', 'Sale should be credit');
+            }
+            if ($ledgerType == 'expense' && $type !== 'debit') {
+                $validator->errors()->add('type', 'Expense should be debit');
+            }
+        });
+    }
 }

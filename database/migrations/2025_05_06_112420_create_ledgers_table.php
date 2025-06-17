@@ -8,17 +8,17 @@ return new class extends Migration {
     {
         Schema::create('ledgers', function (Blueprint $table) {
             $table->id();
-        
             $table->string('description', 255);
             $table->string('reference', 255)->nullable();
             $table->decimal('amount', 10, 2);
             $table->enum('type', ['credit', 'debit']);
-            // $table->enum('ledger_type', ['sale', 'purchase', 'expense']);
-            $table->date('date')->nullable();
-            
-            $table->foreignId(column: 'customer_id')
-            ->constrained('customers')
-            ->onDelete('cascade');            
+            $table->date('date')->default(now());
+            $table->enum('ledger_type', ['sale', 'purchase', 'expense', 'amount']);
+            $table->decimal('total_amount', 15, 2)->nullable();
+            $table->foreignId(column: 'customer_id')->constrained('customers')
+            ->onDelete('cascade')->nullable();
+
+            $table->softDeletes();     
             $table->timestamps();
         });
         
