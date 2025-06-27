@@ -21,10 +21,10 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function index()
+    public function index(UserRequest $request)
     {
         try {
-            $users = $this->userService->all();
+            $users = $this->userService->findAll($request->all());
             return $this->success($users);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

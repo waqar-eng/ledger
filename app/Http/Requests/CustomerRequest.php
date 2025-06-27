@@ -19,14 +19,18 @@ class CustomerRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
-    {
-        return [
-            'name'         => 'required|string|max:255',
-            'phone_number' => 'required|string|max:20|unique:customers,phone_number,' . $this->id,
-            'address'      => 'required|string|max:500',
-            'email'        => 'nullable|email|max:255|unique:customers,email,' . $this->id,
-            
-        ];
-    }
+ public function rules()
+{
+    $customerId = $this->route('customer')?->id ?? $this->id;
+
+    $postRules = [
+        'name'         => 'nullable|string|max:255',
+        'phone_number' => 'nullable|string|max:20|unique:customers,phone_number,' . $customerId,
+        'address'      => 'nullable|string|max:500',
+        'email'        => 'nullable|email|max:255|unique:customers,email,' . $customerId,
+    ];
+
+    return $postRules; 
+}
+
 }

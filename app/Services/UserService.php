@@ -3,6 +3,7 @@
 namespace App\Services;
 
 
+use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Services\Interfaces\UserServiceInterface;
 use Illuminate\Support\Facades\Auth;
@@ -28,5 +29,22 @@ class UserService extends BaseService implements UserServiceInterface
            return false;
         }
     }
+    
+    public function findAll(array $filters)
+    {
+        $perPage = $filters['per_page'] ?? 10;
+        $search = $filters['search'] ?? '';
+
+        return User::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%");
+                    
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($perPage);
+   }
 }
 

@@ -23,7 +23,7 @@ class LedgerController extends Controller
     public function index(LedgerRequest $request)
     {
         try {
-            $ledger = $this->ledgerService->findAll($request->validated());
+            $ledger = $this->ledgerService->findAll($request->all());
             return $this->success($ledger);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

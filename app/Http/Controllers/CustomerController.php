@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Services\Interfaces\CustomerServiceInterface;
 use App\Traits\ApiResponseTrait;
 use Exception;
+use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
@@ -20,10 +21,10 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
     }
 
-    public function index()
+    public function index(CustomerRequest $request)
     {
         try {
-            $customers = $this->customerService->all();
+            $customers = $this->customerService->findAll($request->all());
             return $this->success($customers);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

@@ -12,7 +12,7 @@ class ActivityLogController extends Controller
      */
     public function index()
     {
-        $logs = Activity::latest()->paginate(20); // You can change to ->get() if pagination not needed
+        $logs = Activity::latest()->paginate(10); 
         return response()->json($logs);
     }
 
