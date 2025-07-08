@@ -12,15 +12,16 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:api')->group(function () {
 
     });
+    Route::get('/ledgers/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
     Route::resource('ledgers', LedgerController::class);
     Route::get('/ledgers/report', [LedgerController::class, 'report']);
-    Route::apiResource('users', UserController::class);
-    Route::apiResource('customers', CustomerController::class);
+    Route::resource('users', UserController::class);
+    Route::resource('customers', CustomerController::class);
     // Route::apiResource('sales', SaleController::class);
     // Route::apiResource('purchases', PurchaseController::class);
     // Route::apiResource('expenses', ExpenseController::class);
     Route::resource('investment', InvestmentController::class);
-    Route::apiResource('/activity-logs', ActivityLogController::class);
+    Route::resource('/activity-logs', ActivityLogController::class);
 
 });
 

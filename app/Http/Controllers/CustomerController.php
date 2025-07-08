@@ -6,13 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
 use App\Models\Customer;
 use App\Services\Interfaces\CustomerServiceInterface;
-use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $customerService;
 

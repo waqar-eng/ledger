@@ -54,14 +54,15 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             'expense' => $allData->where('ledger_type', 'expense')->sum('amount'),
             'total_amount' => optional($allData->first())->total_amount ?? 0,
         ];
+        
 
          return [
             'pagination' => $paginated,
             'totals' => $totals
         ];
+
+        
     }
-
-
 
     public function create($request)
     {
@@ -113,4 +114,27 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         }
         return $ledger;
     }
+
+    public function getDashboardSummary(): array
+    {
+        $now = Carbon::now();
+
+        $daily = Ledger::whereDate('created_at', $now->toDateString())->get();
+        $monthly = Ledger::whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->get();
+        $yearly = Ledger::whereYear('created_at', $now->year)->get();
+
+        $formatTotals = fn($collection) => [
+            'sales' => $collection->where('ledger_type', 'sale')->sum('amount'),
+            'expenses' => $collection->where('ledger_type', 'expense')->sum('amount'),
+            'purchases' => $collection->where('ledger_type', 'purchase')->sum('amount'),
+        ];
+
+        return [
+            'daily' => $formatTotals($daily),
+            'monthly' => $formatTotals($monthly),
+            'yearly' => $formatTotals($yearly),
+        ];
+    }
+
+
 }

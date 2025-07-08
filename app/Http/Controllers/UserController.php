@@ -6,13 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
-use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $userService;
 

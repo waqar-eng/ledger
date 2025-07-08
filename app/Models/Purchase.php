@@ -9,9 +9,9 @@ class Purchase extends Model
     protected $fillable = ['ledger_id'];
 
     public function ledger()
-{
-    return $this->belongsTo(Ledger::class);
-}
+    {
+        return $this->belongsTo(Ledger::class);
+    }
 
    public const PURCHASE_CREATED = 'Purchase created successfully';
    public const PURCHASE_UPDATED = 'Purchase updated successfully';

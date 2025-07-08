@@ -44,7 +44,11 @@ use App\Repositories\PurchaseRepository;
 use App\Services\Interfaces\InvestmentServiceInterface;
 use App\Services\InvestmentService;
 use App\Repositories\Interfaces\InvestmentRepositoryInterface;
+use App\Repositories\Interfaces\Log_activityRepositoryInterface;
 use App\Repositories\InvestmentRepository;
+use App\Repositories\Log_activityRepository;
+use App\Services\Interfaces\Log_activityServiceInterface;
+use App\Services\Log_activityService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -77,5 +81,9 @@ class AppServiceProvider extends ServiceProvider
         // Purchase
         $this->app->bind(InvestmentServiceInterface::class, InvestmentService::class);
         $this->app->bind(InvestmentRepositoryInterface::class, InvestmentRepository::class);
+
+        $this->app->bind(Log_activityServiceInterface::class, Log_activityService::class);
+        $this->app->bind(Log_activityRepositoryInterface::class, Log_activityRepository::class);
+
     }
 }

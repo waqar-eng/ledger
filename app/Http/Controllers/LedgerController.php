@@ -6,18 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LedgerRequest;
 use App\Models\Ledger;
 use App\Services\Interfaces\LedgerServiceInterface;
-use App\Traits\ApiResponseTrait;
 use Exception;
+use App\Services\LedgerService;
+
 
 class LedgerController extends Controller
 {
-    use ApiResponseTrait;
-
-    protected $ledgerService;
+     
+    protected LedgerService $ledgerService;
 
     public function __construct(LedgerServiceInterface $ledgerService)
     {
         $this->ledgerService = $ledgerService;
+    }
+
+    public function dashboardSummary()
+    {
+        $summary = $this->ledgerService->getDashboardSummary();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Dashboard summary fetched successfully',
+            'data' => $summary
+        ]);
     }
 
     public function index(LedgerRequest $request)

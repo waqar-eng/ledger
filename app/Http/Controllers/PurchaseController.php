@@ -4,13 +4,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Purchase;
 use App\Services\Interfaces\PurchaseServiceInterface;
-use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Exception;
 
 class PurchaseController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $purchaseService;
 

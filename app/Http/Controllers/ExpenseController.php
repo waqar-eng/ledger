@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Services\Interfaces\ExpenseServiceInterface;
-use App\Traits\ApiResponseTrait;
 use App\Http\Requests\ExpenseRequest;
 use App\Models\Expense;
 use Illuminate\Http\Request;
@@ -11,7 +10,6 @@ use Exception;
 
 class ExpenseController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $expenseService;
 

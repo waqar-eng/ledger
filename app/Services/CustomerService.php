@@ -18,7 +18,7 @@ class CustomerService extends BaseService implements CustomerServiceInterface
 
     public function all()
     {
-        return Customer::with('ledgers')->get(); // eager loads ledgers with each customer
+        return Customer::with('ledgers')->get();
     }
 
 
@@ -27,7 +27,7 @@ class CustomerService extends BaseService implements CustomerServiceInterface
     $perPage = $filters['per_page'] ?? null;
     $search = $filters['search'] ?? '';
 
-    $query = Customer::query()
+    $query = Customer::with('ledgers')
         ->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
