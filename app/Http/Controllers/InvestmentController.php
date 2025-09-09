@@ -5,13 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InvestmentRequest;
 use App\Models\Investment;
 use App\Services\Interfaces\InvestmentServiceInterface;
-use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Http\Request;
 
 class InvestmentController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $investmentService;
 

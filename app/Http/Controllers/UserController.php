@@ -6,13 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
-use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $userService;
 
@@ -21,10 +19,10 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function index()
+    public function index(UserRequest $request)
     {
         try {
-            $users = $this->userService->all();
+            $users = $this->userService->findAll($request->all());
             return $this->success($users);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

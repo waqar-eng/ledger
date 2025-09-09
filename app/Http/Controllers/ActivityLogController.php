@@ -2,47 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Log_activityRequest;
+use App\Models\Log_activity;
+use App\Services\Interfaces\Log_activityServiceInterface;
+use Exception;
 use Illuminate\Http\Request;
-use Spatie\Activitylog\Models\Activity;
+
 
 class ActivityLogController extends Controller
 {
-    /**
-     * Display a listing of activity logs.
-     */
-    public function index()
+    protected $log_activityService;
+
+    public function __construct(Log_activityServiceInterface $log_activityService)
     {
-        $logs = Activity::latest()->paginate(20); // You can change to ->get() if pagination not needed
-        return response()->json($logs);
+        $this->log_activityService = $log_activityService;
     }
 
-    /**
-     * Display a specific activity log by ID.
-     */
+    public function index(Request $request)
+    {
+        try {
+            $activity_log = $this->log_activityService->all();
+            return $this->success($activity_log);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+
+    public function store(Log_activityRequest $request)
+    {
+        try {
+            $activity_log = $this->log_activityService->create($request->all());
+            return $this->success($activity_log, Log_activity::LOG_CREATED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+
     public function show($id)
     {
-        $log = Activity::find($id);
-
-        if (!$log) {
-            return response()->json(['message' => 'Log not found'], 404);
+        try {
+            $activity_log = $this->log_activityService->find($id);
+            return $this->success($activity_log);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
         }
-
-        return response()->json($log);
     }
 
-    /**
-     * Remove the specified activity log from storage.
-     */
+    public function update(Log_activityRequest $request, $id)
+    {
+        try {
+            $activity_log = $this->log_activityService->update($request->all(), $id);
+            return $this->success($activity_log, Log_activity::LOG_UPDATED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+
     public function destroy($id)
     {
-        $log = Activity::find($id);
-
-        if (!$log) {
-            return response()->json(['message' => 'Log not found'], 404);
+        try {
+            $this->log_activityService->delete($id);
+            return $this->success(null, Log_activity::LOG_DELETED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+  
         }
-
-        $log->delete();
-
-        return response()->json(['message' => 'Log deleted successfully']);
     }
+
 }

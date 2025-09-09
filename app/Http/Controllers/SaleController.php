@@ -2,8 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Interfaces\SaleServiceInterface;
-use App\Traits\ApiResponseTrait;
-use App\Http\Requests\SaleRequest; //  correct
+use App\Http\Requests\SaleRequest; 
 use App\Models\Sale;
 use Illuminate\Http\Request;
 
@@ -11,7 +10,6 @@ use Exception;
 
 class SaleController extends Controller
 {
-    use ApiResponseTrait;
 
     protected $saleService;
 
@@ -20,7 +18,7 @@ class SaleController extends Controller
         $this->saleService = $saleService;
     }
 
-    public function index(Request $request)  // Add Request here
+    public function index(Request $request) 
     {
         try {
             // Get start_date and end_date from the request

@@ -20,11 +20,30 @@ class UserRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {
-        return [
+{
+    switch ($this->method()) {
+        case 'POST':
+            return [
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:6',     
-        ];
+                'password' => 'required|string|min:6',
+            ];
+        case 'GET':
+            return [
+                'search' => 'nullable|string',
+                'per_page' => 'nullable|integer',
+            ];
+        case 'PUT':
+        case 'PATCH':
+            $userId = $this->route('user')?->id ?? $this->id;
+
+            return [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $userId,
+                'password' => 'nullable|string|min:6',
+            ];
+        default:
+            return [];
     }
+  }   
 }
