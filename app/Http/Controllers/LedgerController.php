@@ -22,13 +22,12 @@ class LedgerController extends Controller
 
     public function dashboardSummary()
     {
-        $summary = $this->ledgerService->getDashboardSummary();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Dashboard summary fetched successfully',
-            'data' => $summary
-        ]);
+        try {
+             $summary = $this->ledgerService->getDashboardSummary();
+             return $this->success($summary);
+        } catch (Exception $e){
+            return $this->error($e->getMessage(),500);
+        }
     }
 
     public function index(LedgerRequest $request)

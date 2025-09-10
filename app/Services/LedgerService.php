@@ -21,47 +21,59 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         parent::__construct($repository);
     }
     
-    public function findAll(array $filters)
-    {
-        $per_page = $filters['per_page']?? AppConstants::DEFAULT_PER_PAGE;
-        $start_date = $filters['start_date']??'';
-        $end_date = $filters['end_date']??'';
-        $customer_id = $filters['customer_id']??'';
-        $search_term = $filters['search_term']??'';
-        $type = $filters['type']??'';
-        $ledger_type = $filters['ledger_type']??'';
-        if (!empty($start_date) && !empty($end_date)) {
-            $start_date = Carbon::parse($start_date)->startOfDay();
-            $end_date = Carbon::parse($end_date)->endOfDay();
-        }
-           $query = Ledger::with('customer')
-             ->when(!empty($start_date) && !empty($end_date), function ($q) use ($start_date, $end_date) {
-              $q->whereBetween('created_at', [$start_date, $end_date]);
-        })
-        ->when(!empty($customer_id), fn($q) => $q->where('customer_id', $customer_id))
-        ->when(!empty($search_term), fn($q) => $q->where('description', 'like', '%' . $search_term . '%'))
-        ->when(!empty($type), fn($q) => $q->where('type', $type))
-        ->when(!empty($ledger_type), fn($q) => $q->where('ledger_type', $ledger_type))
-        ->orderByDesc('id');
+   public function findAll(array $filters)
+   {
+        $perPage = $filters['per_page'] ?? AppConstants::DEFAULT_PER_PAGE;
 
-        $allData = (clone $query)->get();  
+        [$start_date, $end_date] = $this->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
-        $paginated = $query->paginate($per_page);  
+        $query = $this->buildQuery($filters, $start_date, $end_date);
 
-        $totals = [
-            'sale' => $allData->where('ledger_type', 'sale')->sum('amount'),
-            'purchase' => $allData->where('ledger_type', 'purchase')->sum('amount'),
-            'expense' => $allData->where('ledger_type', 'expense')->sum('amount'),
-            'total_amount' => optional($allData->first())->total_amount ?? 0,
-        ];
-        
+        $allData = (clone $query)->get();
+        $paginated = $query->paginate($perPage);
+        $totals = $this->calculateTotals($allData);
 
-         return [
+        return [
             'pagination' => $paginated,
             'totals' => $totals
         ];
+    }
+    private function parseDates($start, $end): array
+    {
+        if (!empty($start) && !empty($end)) {
+            $start = Carbon::parse($start)->startOfDay();
+            $end = Carbon::parse($end)->endOfDay();
+        } else {
+            $start = $end = null;
+        }
 
-        
+        return [$start, $end];
+    }
+
+    private function buildQuery(array $filters, $start_date, $end_date)
+    {
+        return Ledger::with('customer')
+            ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
+            ->when(!empty($filters['customer_id']), fn($q) => $q->where('customer_id', $filters['customer_id']))
+            ->when(!empty($filters['search_term']), fn($q) => $q->where('description', 'like', '%' . $filters['search_term'] . '%'))
+            ->when(!empty($filters['type']), fn($q) => $q->where('type', $filters['type']))
+            ->when(!empty($filters['ledger_type']), fn($q) => $q->where('ledger_type', $filters['ledger_type']))
+            ->orderByDesc('id');
+    }
+
+    private function applyDateFilters($query, $start_date, $end_date)
+    {
+        return $query->whereBetween('created_at', [$start_date, $end_date]);
+    }
+
+    private function calculateTotals($data)
+    {
+        return [
+            'sale' => $data->where('ledger_type', 'sale')->sum('amount'),
+            'purchase' => $data->where('ledger_type', 'purchase')->sum('amount'),
+            'expense' => $data->where('ledger_type', 'expense')->sum('amount'),
+            'total_amount' => optional($data->first())->total_amount ?? 0,
+        ];
     }
 
     public function create($request)
@@ -130,9 +142,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         ];
 
         return [
-            'daily' => $formatTotals($daily),
-            'monthly' => $formatTotals($monthly),
-            'yearly' => $formatTotals($yearly),
+             'dashboard_summary' => [
+                'daily' => $formatTotals($daily),
+                'monthly' => $formatTotals($monthly),
+                'yearly' => $formatTotals($yearly),
+             ]
         ];
     }
 
