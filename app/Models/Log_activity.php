@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Activity;
 
 class Log_activity extends Activity
 {
+    use SoftDeletes;
     protected $table = 'activity_log';
 
      protected $casts = [

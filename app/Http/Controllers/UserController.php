@@ -7,6 +7,8 @@ use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
 use Exception;
+use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -52,7 +54,8 @@ class UserController extends Controller
     public function update(UserRequest $request, $id)
     {
         try {
-            $user = $this->userService->update($request->validated(), $id);
+            $request = $request->validated();
+            $user = $this->userService->update($request, $id);
             return $this->success($user, User::USER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -82,4 +85,22 @@ class UserController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+
+    
+   public function userDetails(Request $request)
+   {
+    try {
+        $users = $this->userService->userDetail($request);
+        if($users){
+            return $this->success(['users'=> $users], User::USERS_FETCHED);
+        }
+        else{
+            return $this->error(User::USERS_FETCHED_ERROR);
+        }
+    }catch (Exception $e){
+        return $this->error($e->getMessage(),500);
+    }
+
+   }
+
 }

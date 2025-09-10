@@ -46,5 +46,18 @@ class UserService extends BaseService implements UserServiceInterface
             ->orderByDesc('id')
             ->paginate($perPage);
    }
-}
+   public function update($request, $id)
+   {
+        unset($request['email']);
+        if(!$request['password'])
+            unset($request['password']);
+        $user = parent::update($request, $id);
+        return $user ? $user : [];
+   }
+   
+   public function userDetail($request){
+     $user = Auth::guard('api')->user();
+     return $user;
+   }
 
+}
