@@ -16,7 +16,7 @@ class LedgerRequest extends FormRequest
     {
         $postRules = [
             'description' => 'required|string|max:255',
-             AppEnum::Amount->value => 'required|integer',
+             AppEnum::Amount->value => 'required|numeric',
             'date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','repayment','other'])],
@@ -25,7 +25,7 @@ class LedgerRequest extends FormRequest
                 'paid_amount' => 'nullable|numeric|min:0',
                 'remaining_amount' => 'nullable|numeric|min:0',
                 'rate' => 'nullable|numeric|min:0',
-               'quantity' => 'nullable|integer|min:0',
+               'quantity' => 'nullable|numeric|min:0',
                 'bill_no' => 'required|string|max:255',
         ];
         $getRules = [

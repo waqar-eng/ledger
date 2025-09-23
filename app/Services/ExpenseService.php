@@ -7,7 +7,6 @@ use App\Services\Interfaces\ExpenseServiceInterface;
 use App\Models\Expense;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\Ledger;
 
 class ExpenseService extends BaseService implements ExpenseServiceInterface
 {
@@ -44,5 +43,5 @@ class ExpenseService extends BaseService implements ExpenseServiceInterface
         return $results;
     }
 
-    
+
 }

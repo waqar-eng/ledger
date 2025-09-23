@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\CategoryRepository;
+use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 // User bindings
@@ -47,6 +49,8 @@ use App\Repositories\Interfaces\InvestmentRepositoryInterface;
 use App\Repositories\Interfaces\Log_activityRepositoryInterface;
 use App\Repositories\InvestmentRepository;
 use App\Repositories\Log_activityRepository;
+use App\Services\CategoryService;
+use App\Services\Interfaces\CategoryServiceInterface;
 use App\Services\Interfaces\Log_activityServiceInterface;
 use App\Services\Log_activityService;
 
@@ -77,13 +81,16 @@ class AppServiceProvider extends ServiceProvider
         // Purchase
         $this->app->bind(PurchaseServiceInterface::class, PurchaseService::class);
         $this->app->bind(PurchaseRepositoryInterface::class, PurchaseRepository::class);
-        
+
         // Purchase
         $this->app->bind(InvestmentServiceInterface::class, InvestmentService::class);
         $this->app->bind(InvestmentRepositoryInterface::class, InvestmentRepository::class);
 
         $this->app->bind(Log_activityServiceInterface::class, Log_activityService::class);
         $this->app->bind(Log_activityRepositoryInterface::class, Log_activityRepository::class);
+        //category
+        $this->app->bind(CategoryServiceInterface::class, CategoryService::class);
+        $this->app->bind(CategoryRepositoryInterface::class , CategoryRepository::class);
 
     }
 }

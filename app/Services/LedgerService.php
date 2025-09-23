@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\Expense;
 use App\Models\Purchase;
-use GuzzleHttp\Psr7\Request;
 use Illuminate\Validation\ValidationException;
 
 class LedgerService extends BaseService implements LedgerServiceInterface
@@ -20,7 +19,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         parent::__construct($repository);
     }
-    
+
    public function findAll(array $filters)
    {
         $perPage = $filters['per_page'] ?? AppConstants::DEFAULT_PER_PAGE;
@@ -110,7 +109,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         // Step 5: Set derived fields in request data
         $request['type'] = $type;
         $request['total_amount'] = $newTotal;
-        
+
         $ledger = Ledger::create($request);
 
         switch($request['ledger_type']){

@@ -21,7 +21,7 @@ class Ledger extends Model
         'type',
         'date',
         'customer_id',
-        'ledger_type', 
+        'ledger_type',
         'total_amount',
         'payment_type',
         'payment_method',
@@ -30,7 +30,7 @@ class Ledger extends Model
         'quantity',
         'rate',
         'bill_no'
-       
+
     ];
     protected $casts = [
         'amount' => 'float',

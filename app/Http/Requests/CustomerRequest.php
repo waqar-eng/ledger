@@ -30,7 +30,7 @@ class CustomerRequest extends FormRequest
         'email'        => 'nullable|email|max:255|unique:customers,email,' . $customerId,
     ];
 
-    return $postRules; 
+    return $postRules;
 }
 
 }

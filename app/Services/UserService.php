@@ -23,13 +23,13 @@ class UserService extends BaseService implements UserServiceInterface
             $user = Auth::user();
             if ($user instanceof \App\Models\User) {
                 return $user->createToken('API Token')->accessToken;
-            } 
+            }
         }
         else {
            return false;
         }
     }
-    
+
     public function findAll(array $filters)
     {
         $perPage = $filters['per_page'] ?? 10;
@@ -40,7 +40,7 @@ class UserService extends BaseService implements UserServiceInterface
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%");
-                    
+
                 });
             })
             ->orderByDesc('id')
@@ -54,7 +54,7 @@ class UserService extends BaseService implements UserServiceInterface
         $user = parent::update($request, $id);
         return $user ? $user : [];
    }
-   
+
    public function userDetail($request){
      $user = Auth::guard('api')->user();
      return $user;
