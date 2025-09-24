@@ -13,6 +13,8 @@ enum AppEnum:string
     case Opening = 'opening';
 
     case Additional = 'additional';
+    
+    case Investment = 'investment';
 
     case Amount = 'amount';
 

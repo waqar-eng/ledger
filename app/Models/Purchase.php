@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Purchase extends Model
 {
-    protected $fillable = ['ledger_id'];
+    protected $fillable = ['ledger_id', 'actual_quantity', 'predicted_quantity', 'moisture', 'rate', 'amount'];
 
     public function ledger()
     {

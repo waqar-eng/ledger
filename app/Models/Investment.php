@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Investment extends Model
 {
-    protected $fillable = ['user_id', 'type', 'amount', 'date'];
+    protected $fillable = ['ledger_id','user_id', 'type', 'amount', 'total_amount', 'date'];
 
     public function user()
     {

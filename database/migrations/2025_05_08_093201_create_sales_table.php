@@ -18,6 +18,9 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ledger_id')->constrained('ledgers')->onDelete('cascade');
+            $table->string('quantity')->nullable();
+            $table->decimal('rate', 10, 2)->nullable();
+            $table->decimal('amount', 10, 2)->nullable();
             $table->timestamps();
         });
         

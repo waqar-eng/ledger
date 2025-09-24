@@ -10,6 +10,7 @@ use App\Models\Ledger;
 use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\Expense;
+use App\Models\Investment;
 use App\Models\Purchase;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Validation\ValidationException;
@@ -52,9 +53,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function buildQuery(array $filters, $start_date, $end_date)
     {
-        return Ledger::with('customer')
+        return Ledger::with(['customer', 'user'])
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['customer_id']), fn($q) => $q->where('customer_id', $filters['customer_id']))
+            ->when(!empty($filters['user_id']), fn($q) => $q->where('user_id', $filters['user_id']))
             ->when(!empty($filters['search_term']), fn($q) => $q->where('description', 'like', '%' . $filters['search_term'] . '%'))
             ->when(!empty($filters['type']), fn($q) => $q->where('type', $filters['type']))
             ->when(!empty($filters['ledger_type']), fn($q) => $q->where('ledger_type', $filters['ledger_type']))
@@ -76,17 +78,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         ];
     }
 
-    public function create($request)
-    {
-
-        //Step 1: Get the previous total amount from last valid ledger
-        $latestLedger = Ledger::latest()->first();
-
-        $previousTotal = $latestLedger?->total_amount ?? 0;
-        $amount = $request['amount'];
-
-       // Step 2: Determine type based on ledger_type
-        $type = match ($request['ledger_type']) {
+    public static function getLedgerType($ledger_type){
+        return match ($ledger_type) {
             'purchase', 'expense', 'withdraw', 'repayment', 'other' => AppEnum::Debit->value,
             'sale', 'investment' => AppEnum::Credit->value,
 
@@ -94,34 +87,91 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 'ledger_type' => ['Invalid ledger type.']
             ])
         };
+    }
+    public static function ledgerNewTotalAndType($request, $id=null){
+        $query = Ledger::query();
+        if ($id) {
+            $query->where('id', '<', $id);
+        }
 
-        // Step 3: Calculate new total
+        $latestLedger = $query->latest()->first();
+        $previousTotal = $latestLedger?->total_amount ?? 0;
+        $type=self::getLedgerType($request['ledger_type']);
+        
         $newTotal = $type === AppEnum::Credit->value
-            ? $previousTotal + $amount
-            : $previousTotal - $amount;
+            ? $previousTotal + $request['amount']
+            : $previousTotal - $request['amount'];
 
-        // Step 4: Check for negative balance
         if ($newTotal < 0) {
             throw ValidationException::withMessages([
                 'amount' => [Ledger::LOW_BALANCE_ERROR],
             ]);
         }
+        return ['newTotal'=>$newTotal, 'type'=>$type];
+    }
+    public static function investmentNewTotal($request, $id = null)
+    {
+        $query = Investment::where('user_id', $request['user_id']);
 
-        // Step 5: Set derived fields in request data
-        $request['type'] = $type;
-        $request['total_amount'] = $newTotal;
-        
+        // Exclude current record when updating
+        if ($id) {
+            $query->where('id', '<', $id);
+        }
+
+        $latestInvestment = $query->latest()->first();
+        $previousInvestment = $latestInvestment?->total_amount ?? 0;
+
+        // Calculate new total based on amount provided
+        $newInvestment = match ($request['ledger_type']) {
+            'investment' => $previousInvestment + $request['amount'],
+            'withdraw'   => $previousInvestment - $request['amount'],
+            default      => $previousInvestment
+        };
+
+        if ($newInvestment < 0) {
+            throw ValidationException::withMessages([
+                'amount' => [Ledger::LOW_BALANCE_ERROR],
+            ]);
+        }
+        return $newInvestment;
+    }
+
+
+    public function create($request)
+    {
+
+        //Step 1: Get the previous total amount from last valid ledger
+        $amount = $request['amount'];
+
+        $typeAndNewtotal=self::ledgerNewTotalAndType($request);
+
+       $newInvestment=self::investmentNewTotal($request);
+        // Set derived fields in request data
+        $request['type'] = $typeAndNewtotal['type'];
+        $request['total_amount'] = $typeAndNewtotal['newTotal'];
         $ledger = Ledger::create($request);
+        $request['ledger_id']=$ledger->id;
 
         switch($request['ledger_type']){
             case 'sale':
-                Sale::create(['ledger_id' => $ledger->id]);
+                Sale::create($request);
                 break;
             case 'expense':
-                Expense::create(['ledger_id' =>$ledger->id]);
+                Expense::create($request);
                 break;
             case 'purchase':
-                Purchase::create(['ledger_id' => $ledger->id]);
+                app(PurchaseService::class)->createWithMoisture($request);
+                break;
+            case 'investment':
+            case 'withdraw':
+                Investment::create([
+                    'ledger_id' => $ledger->id,
+                    'user_id'      => $request['user_id'],
+                    'type'         => $request['ledger_type'] ?? 'investment',
+                    'amount'       => $amount,
+                    'total_amount' =>  $newInvestment,
+                    'date'         => $request['date'],
+                ]);
                 break;
         }
         return $ledger;
@@ -148,6 +198,95 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 'yearly' => $formatTotals($yearly),
              ]
         ];
+    }
+    public function isLatestLedger($id){
+        $lastLedgerId = Ledger::latest('id')->value('id');
+        // Step 2: Check if the given id is the last one
+        return ($id == $lastLedgerId) ? true :false;
+    }
+    public function find($id)
+    {
+        return Ledger::where('id', $id)
+        ->with(['investment', 'sale', 'purchase','expense'])->first();
+    }
+    public function update($request, $id)
+    {
+        // Step 1: Find the existing ledger
+        $ledger = self::find($id);
+        // Step 2: Normalize amount and totals
+        $amount = $request['amount'];
+        $request['user_id']=$ledger->user_id??0;
+        $typeAndNewTotal = self::ledgerNewTotalAndType($request,$ledger->id);
+        $newInvestment = self::investmentNewTotal($request, $ledger->investment?$ledger->investment->id:null);
+        // return $newInvestment;
+        // Step 3: Update ledger itself
+        $ledger->update([
+            'description'      => $request['description']      ?? $ledger->description,
+            'bill_no'          => $request['bill_no']          ?? $ledger->bill_no,
+            'amount'           => $amount,
+            'type'             => $typeAndNewTotal['type'],
+            'total_amount'     => $typeAndNewTotal['newTotal'],
+            // 'ledger_type'      => $request['ledger_type']      ?? $ledger->ledger_type,
+            'date'             => $request['date']             ?? $ledger->date,
+            'customer_id'      => $request['customer_id']      ?? $ledger->customer_id,
+            'user_id'          => $request['user_id']          ?? $ledger->user_id,
+            'payment_type'     => $request['payment_type']     ?? $ledger->payment_type,
+            'payment_method'   => $request['payment_method']   ?? $ledger->payment_method,
+            'paid_amount'      => $request['paid_amount']      ?? $ledger->paid_amount,
+            'remaining_amount' => $request['remaining_amount'] ?? $ledger->remaining_amount,
+        ]);
+
+        // Step 4: Update relation based on ledger_type
+        switch ($request['ledger_type']) {
+            case 'sale':
+                $ledger->sale()->updateOrCreate(
+                    ['ledger_id' => $ledger->id],
+                    [
+                        'rate'     => $request['rate'],
+                        'quantity' => $request['quantity'],
+                        'amount'   => $amount,
+                    ]
+                );
+                break;
+
+            case 'purchase':
+                return app(PurchaseService::class)->updateWithMoisture(
+                    $ledger->id,
+                    [
+                        'quantity' => $request['quantity'],
+                        'rate'     => $request['rate'],
+                        'moisture' => $request['moisture'] ?? 0,
+                        'amount' => $request['amount'] ?? 0,
+                    ]
+                );
+                break;
+
+            case 'expense':
+                $ledger->expense()->updateOrCreate(
+                    ['ledger_id' => $ledger->id],
+                    [
+                        'amount' => $amount,
+                        'description'   => $request['description'] ?? null,
+                    ]
+                );
+                break;
+
+            case 'investment':
+            case 'withdraw':
+                Investment::updateOrCreate(
+                    ['ledger_id' => $ledger->id],
+                    [
+                        'user_id'      => $request['user_id'],
+                        'type'         => $request['ledger_type'],
+                        'amount'       => $amount,
+                        'total_amount' => $newInvestment,
+                        'date'         => $request['date'],
+                    ]
+                );
+                break;
+        }
+
+        return $ledger->fresh();
     }
 
 

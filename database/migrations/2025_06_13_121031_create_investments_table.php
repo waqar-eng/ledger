@@ -13,9 +13,15 @@ return new class extends Migration
     {
         Schema::create('investments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('type', ['opening', 'additional', 'withdrawal']);
+            $table->foreignId(column: 'user_id')->constrained('users')
+            ->onDelete('cascade')->nullable();
+           
+            $table->foreignId(column: 'ledger_id')->constrained('ledgers')
+            ->onDelete('cascade')->nullable();
+
+            $table->enum('type', ['investment', 'withdraw']);
             $table->integer('amount');
+            $table->decimal('total_amount', 15, 2)->nullable();
             $table->date('date')->default(now());
             $table->timestamps();
         });
