@@ -21,7 +21,7 @@ class Ledger extends Model
         'type',
         'date',
         'customer_id',
-        'ledger_type',
+        'category_id',
         'user_id',
         'ledger_type',
         'total_amount',
@@ -46,6 +46,10 @@ class Ledger extends Model
     public function investment()
     {
         return $this->hasOne(Investment::class);
+    }
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
     }
     public function user()
     {
