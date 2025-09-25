@@ -52,13 +52,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function buildQuery(array $filters, $start_date, $end_date)
     {
-        return Ledger::with(['customer', 'user'])
+        return Ledger::with(['customer', 'user', 'category'])
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['customer_id']), fn($q) => $q->where('customer_id', $filters['customer_id']))
             ->when(!empty($filters['user_id']), fn($q) => $q->where('user_id', $filters['user_id']))
             ->when(!empty($filters['search_term']), fn($q) => $q->where('description', 'like', '%' . $filters['search_term'] . '%'))
             ->when(!empty($filters['type']), fn($q) => $q->where('type', $filters['type']))
             ->when(!empty($filters['ledger_type']), fn($q) => $q->where('ledger_type', $filters['ledger_type']))
+            ->when(!empty($filters['category_id']), fn($q) => $q->where('category_id', $filters['category_id']))
             ->orderByDesc('id');
     }
 
@@ -228,7 +229,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id],$request);
                 break;
             case 'purchase':
-                return app(PurchaseService::class)->updateWithMoisture($ledger->id,$request);
+                app(PurchaseService::class)->updateWithMoisture($ledger->id,$request);
                 break;
             case 'expense':
                 $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
