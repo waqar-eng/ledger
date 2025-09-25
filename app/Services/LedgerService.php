@@ -12,7 +12,6 @@ use App\Models\Sale;
 use App\Models\Expense;
 use App\Models\Investment;
 use App\Models\Purchase;
-use GuzzleHttp\Psr7\Request;
 use Illuminate\Validation\ValidationException;
 
 class LedgerService extends BaseService implements LedgerServiceInterface
@@ -21,7 +20,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         parent::__construct($repository);
     }
-    
+
    public function findAll(array $filters)
    {
         $perPage = $filters['per_page'] ?? AppConstants::DEFAULT_PER_PAGE;
@@ -97,7 +96,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $latestLedger = $query->latest()->first();
         $previousTotal = $latestLedger?->total_amount ?? 0;
         $type=self::getLedgerType($request['ledger_type']);
-        
+
         $newTotal = $type === AppEnum::Credit->value
             ? $previousTotal + $request['amount']
             : $previousTotal - $request['amount'];
@@ -112,6 +111,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     public static function investmentNewTotal($request, $id = null)
     {
         $query = Investment::where('user_id', $request['user_id']);
+
 
         // Exclude current record when updating
         if ($id) {

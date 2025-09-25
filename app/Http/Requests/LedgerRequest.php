@@ -35,7 +35,7 @@ class LedgerRequest extends FormRequest
                 'paid_amount' => 'nullable|numeric|min:0',
                 'remaining_amount' => 'nullable|numeric|min:0',
                 'rate' => 'nullable|numeric|min:0',
-               'quantity' => 'nullable|integer|min:0',
+               'quantity' => 'nullable|numeric|min:0',
                 'bill_no' => 'required|string|max:255',
         ];
         $getRules = [

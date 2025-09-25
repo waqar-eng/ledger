@@ -7,7 +7,6 @@ use App\Http\Requests\CustomerRequest;
 use App\Models\Customer;
 use App\Services\Interfaces\CustomerServiceInterface;
 use Exception;
-use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
@@ -49,10 +48,11 @@ class CustomerController extends Controller
         }
     }
 
-    public function update(CustomerRequest $request, $id)
-    {
+    public function update(CustomerRequest $request)
+    {  // return $request;
         try {
-            $customer = $this->customerService->update($request->validated(), $id);
+            //$request = $request->validated();
+            $customer = $this->customerService->update($request->array() , $request->id);
             return $this->success($customer, Customer::CUSTOMER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

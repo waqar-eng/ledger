@@ -50,5 +50,5 @@ class UserRequest extends FormRequest
         default:
             return [];
     }
-  }   
+  }
 }
