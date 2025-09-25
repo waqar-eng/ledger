@@ -2,7 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Interfaces\SaleServiceInterface;
-use App\Http\Requests\SaleRequest; 
+use App\Http\Requests\SaleRequest;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 
@@ -18,14 +18,11 @@ class SaleController extends Controller
         $this->saleService = $saleService;
     }
 
-    public function index(Request $request) 
+    public function index(Request $request)
     {
         try {
-            // Get start_date and end_date from the request
-            $filters = $request->only(['start_date', 'end_date']);
 
-            // Pass the filters to the service method for fetching sales
-            $sales = $this->saleService->all($filters);
+            $sales = $this->saleService->all($request->array());
 
             return $this->success($sales);
         } catch (Exception $e) {

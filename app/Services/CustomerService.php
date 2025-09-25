@@ -39,7 +39,15 @@ class CustomerService extends BaseService implements CustomerServiceInterface
 
     return $perPage ? $query->paginate($perPage) : $query->get();
 }
-    
+
+     public function update(array $request, $id)
+     {
+        unset($request['email']);
+        unset($request['phone_number']);
+        $customer = parent::update($request, $id);
+        return $customer ? $customer : [];
+
+    }
 
 }
 

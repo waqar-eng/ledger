@@ -6,8 +6,6 @@ namespace App\Services;
 use App\Repositories\Interfaces\SaleRepositoryInterface;
 use App\Services\Interfaces\SaleServiceInterface;
 use App\Models\Sale;
-use Illuminate\Support\Facades\Log;
-use App\Models\Ledger;
 
 
 
@@ -45,5 +43,5 @@ class SaleService extends BaseService implements SaleServiceInterface
         return $results;
     }
 
-  
+
 }
