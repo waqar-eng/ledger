@@ -30,6 +30,15 @@ class UserController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+    public function AllUsers(UserRequest $request)
+    {
+        try {
+            $users = $this->userService->AllUsers($request->all());
+            return $this->success($users);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 
     public function store(UserRequest $request)
     {

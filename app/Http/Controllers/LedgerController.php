@@ -43,7 +43,7 @@ class LedgerController extends Controller
     public function store(LedgerRequest $request)
     {
         try {
-           $user = $this->ledgerService->create($request->validated());
+           $user = $this->ledgerService->create($request->all());
             return $this->success($user, Ledger::LEDGER_CREATED, 201);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -53,8 +53,11 @@ class LedgerController extends Controller
     public function show($id)
     {
         try {
+            if($this->ledgerService->isLatestLedger($id)){
             $user = $this->ledgerService->find($id);
             return $this->success($user);
+            }
+            return $this->error(Ledger::UPDATE_RESTRICTED, 500);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -63,8 +66,11 @@ class LedgerController extends Controller
     public function update(LedgerRequest $request, $id)
     {
         try {
-            $user = $this->ledgerService->update($request->validated(), $id);
-            return $this->success($user, Ledger::LEDGER_UPDATED);
+            if($this->ledgerService->isLatestLedger($id)){
+                $user = $this->ledgerService->update($request->all(), $id);
+                return $this->success($user, Ledger::LEDGER_UPDATED);
+            }
+            return $this->error(Ledger::UPDATE_RESTRICTED, 500);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

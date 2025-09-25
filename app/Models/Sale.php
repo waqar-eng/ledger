@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sale extends Model
 {
-    protected $fillable = ['ledger_id'];
+    protected $fillable = ['ledger_id','quantity', 'rate', 'amount'];
     public function ledger()
 {
     return $this->belongsTo(Ledger::class);
