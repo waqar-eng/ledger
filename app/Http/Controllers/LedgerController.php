@@ -57,7 +57,7 @@ class LedgerController extends Controller
             $user = $this->ledgerService->find($id);
             return $this->success($user);
             }
-            return $this->error("Only latest record able to edit", 500);
+            return $this->error(Ledger::UPDATE_RESTRICTED, 500);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -70,7 +70,7 @@ class LedgerController extends Controller
                 $user = $this->ledgerService->update($request->all(), $id);
                 return $this->success($user, Ledger::LEDGER_UPDATED);
             }
-            return $this->error("Only latest record able to edit", 500);
+            return $this->error(Ledger::UPDATE_RESTRICTED, 500);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

@@ -211,78 +211,33 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public function update($request, $id)
     {
-        // Step 1: Find the existing ledger
         $ledger = self::find($id);
-        // Step 2: Normalize amount and totals
         $amount = $request['amount'];
-        $request['user_id']=$ledger->user_id??0;
+        $request['user_id']=$ledger->user_id?? null;
+        $request['customer_id']=$ledger->customer_id?? null;
         $typeAndNewTotal = self::ledgerNewTotalAndType($request,$ledger->id);
+        $request['type']=$typeAndNewTotal['type']??'investment';
+        $request['total_amount']=$typeAndNewTotal['newTotal']??0;
+        // Update ledger itself
+        $ledger->update($request);
         $newInvestment = self::investmentNewTotal($request, $ledger->investment?$ledger->investment->id:null);
-        // return $newInvestment;
-        // Step 3: Update ledger itself
-        $ledger->update([
-            'description'      => $request['description']      ?? $ledger->description,
-            'bill_no'          => $request['bill_no']          ?? $ledger->bill_no,
-            'amount'           => $amount,
-            'type'             => $typeAndNewTotal['type'],
-            'total_amount'     => $typeAndNewTotal['newTotal'],
-            // 'ledger_type'      => $request['ledger_type']      ?? $ledger->ledger_type,
-            'date'             => $request['date']             ?? $ledger->date,
-            'customer_id'      => $request['customer_id']      ?? $ledger->customer_id,
-            'user_id'          => $request['user_id']          ?? $ledger->user_id,
-            'payment_type'     => $request['payment_type']     ?? $ledger->payment_type,
-            'payment_method'   => $request['payment_method']   ?? $ledger->payment_method,
-            'paid_amount'      => $request['paid_amount']      ?? $ledger->paid_amount,
-            'remaining_amount' => $request['remaining_amount'] ?? $ledger->remaining_amount,
-        ]);
 
-        // Step 4: Update relation based on ledger_type
+        // Update relation based on ledger_type
         switch ($request['ledger_type']) {
             case 'sale':
-                $ledger->sale()->updateOrCreate(
-                    ['ledger_id' => $ledger->id],
-                    [
-                        'rate'     => $request['rate'],
-                        'quantity' => $request['quantity'],
-                        'amount'   => $amount,
-                    ]
-                );
+                $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id],$request);
                 break;
-
             case 'purchase':
-                return app(PurchaseService::class)->updateWithMoisture(
-                    $ledger->id,
-                    [
-                        'quantity' => $request['quantity'],
-                        'rate'     => $request['rate'],
-                        'moisture' => $request['moisture'] ?? 0,
-                        'amount' => $request['amount'] ?? 0,
-                    ]
-                );
+                return app(PurchaseService::class)->updateWithMoisture($ledger->id,$request);
                 break;
-
             case 'expense':
-                $ledger->expense()->updateOrCreate(
-                    ['ledger_id' => $ledger->id],
-                    [
-                        'amount' => $amount,
-                        'description'   => $request['description'] ?? null,
-                    ]
-                );
+                $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
                 break;
-
             case 'investment':
             case 'withdraw':
-                Investment::updateOrCreate(
-                    ['ledger_id' => $ledger->id],
-                    [
-                        'user_id'      => $request['user_id'],
-                        'type'         => $request['ledger_type'],
-                        'amount'       => $amount,
-                        'total_amount' => $newInvestment,
-                        'date'         => $request['date'],
-                    ]
-                );
+                $request['total_amount'] = $newInvestment;
+                $request['type']         = $request['ledger_type'];
+                Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
                 break;
         }
 

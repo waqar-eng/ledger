@@ -81,4 +81,5 @@ public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transactio
 public const LEDGER_CREATED= "Ledger created successfully";
 public const LEDGER_UPDATED= "Ledger updated successfully";
 public const LEDGER_DELETED= "Ledger deleted successfully";
+public const UPDATE_RESTRICTED= "Only latest record be able to edit";
 }
