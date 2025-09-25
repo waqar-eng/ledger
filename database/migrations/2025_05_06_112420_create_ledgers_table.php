@@ -23,6 +23,9 @@ return new class extends Migration {
             $table->decimal('rate', 10, 2)->nullable();
             $table->foreignId(column: 'customer_id')->constrained('customers')
             ->onDelete('cascade')->nullable();
+           
+            $table->foreignId(column: 'user_id')->constrained('users')
+            ->onDelete('cascade')->nullable();
 
             $table->softDeletes();     
             $table->timestamps();

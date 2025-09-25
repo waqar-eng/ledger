@@ -40,5 +40,46 @@ class PurchaseService extends BaseService implements PurchaseServiceInterface
         $results = $query->get();
         return $results;
     }
+    public function createWithMoisture(array $data)
+    {
+        $moisture = $data['moisture'] ?? 0;
+        $quantity = $data['quantity']??0;
+        $predictedQuantity = $quantity * (1 - $moisture / 100);
+
+        $purchaseData = [
+            'ledger_id'          => $data['ledger_id'],
+            'moisture'           => $moisture,
+            'rate'               => $data['rate'],
+            'amount'             => $data['amount'] ?? 0,
+            'actual_quantity'    => $quantity,
+            'predicted_quantity' => $predictedQuantity,
+        ];
+
+        return Purchase::create($purchaseData);
+    }
+
+    public function updateWithMoisture($ledgerId, array $data)
+    {
+        $purchase = Purchase::where('ledger_id', $ledgerId)->firstOrFail();
+        $actualQuantity   = $data['quantity'];
+        $rate             = $data['rate'];
+        $moisture         = $data['moisture'] ?? 0;
+        
+        $predictedQuantity = $moisture > 0
+        ? $actualQuantity - ($actualQuantity * ($moisture / 100))
+        : $actualQuantity;
+        
+        // return [$purchase, $ledgerId, $data, $predictedQuantity];
+        $purchase->update([
+            'moisture'           => $moisture,
+            'rate'               => $rate,
+            'amount'             => $data['amount'] ?? 0,
+            'actual_quantity'    => $actualQuantity,
+            'predicted_quantity' => $predictedQuantity,
+        ]);
+
+        return $purchase;
+    }
+
 
 }

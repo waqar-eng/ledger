@@ -22,6 +22,8 @@ class Ledger extends Model
         'date',
         'customer_id',
         'ledger_type',
+        'user_id',
+        'ledger_type',
         'total_amount',
         'payment_type',
         'payment_method',
@@ -40,6 +42,14 @@ class Ledger extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+    public function investment()
+    {
+        return $this->hasOne(Investment::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -67,9 +77,10 @@ public function expense()
     return $this->hasOne(Expense::class);
 }
 
-public const LOW_BALANCE_ERROR= "Insufficient balance to perform debit transaction";
+public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transaction";
 
 public const LEDGER_CREATED= "Ledger created successfully";
 public const LEDGER_UPDATED= "Ledger updated successfully";
 public const LEDGER_DELETED= "Ledger deleted successfully";
+public const UPDATE_RESTRICTED= "Only latest record be able to edit";
 }

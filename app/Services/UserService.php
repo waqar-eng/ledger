@@ -39,12 +39,28 @@ class UserService extends BaseService implements UserServiceInterface
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%");
-
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('user_type', 'like', "%$search%");
                 });
             })
             ->orderByDesc('id')
             ->paginate($perPage);
+   }
+    public function AllUsers($filters)
+    {
+        $search = $filters['search'] ?? '';
+
+        return User::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('user_type', 'like', "%$search%");
+
+                });
+            })
+            ->orderByDesc('id')->get();
    }
    public function update($request, $id)
    {

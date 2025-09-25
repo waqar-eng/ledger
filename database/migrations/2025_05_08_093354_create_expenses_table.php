@@ -10,14 +10,12 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        // Schema::create('expenses', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->timestamps();
-       
+    {       
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ledger_id')->constrained('ledgers')->onDelete('cascade');
+            $table->decimal('amount', 15, 2)->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

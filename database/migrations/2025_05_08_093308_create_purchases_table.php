@@ -15,6 +15,11 @@ return new class extends Migration
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ledger_id')->constrained('ledgers')->onDelete('cascade');
+            $table->string('actual_quantity')->nullable();
+            $table->string('predicted_quantity')->nullable();
+            $table->float('moisture')->nullable();
+            $table->decimal('rate', 10, 2)->nullable();
+            $table->decimal('amount', 10, 2)->nullable();
             $table->timestamps();
         });
         

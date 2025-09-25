@@ -16,9 +16,19 @@ class LedgerRequest extends FormRequest
     {
         $postRules = [
             'description' => 'required|string|max:255',
-             AppEnum::Amount->value => 'required|numeric',
+             AppEnum::Amount->value => 'required',
             'date' => 'required|date',
-            'customer_id' => 'required|exists:customers,id',
+            // Conditional validation
+            'customer_id'     => [
+                'nullable',
+                'exists:customers,id',
+                'required_unless:ledger_type,withdraw,investment',
+            ],
+            'user_id'         => [
+                'nullable',
+                'exists:users,id',
+                'required_if:ledger_type,withdraw,investment',
+            ],
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','repayment','other'])],
                 'payment_type' => ['nullable', Rule::in(['cash', 'loan', 'mix'])],
                 'payment_method' => ['nullable', Rule::in(['cash', 'bank'])],

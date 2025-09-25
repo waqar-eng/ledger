@@ -20,6 +20,7 @@ Route::prefix('v1')->group(function () {
         Route::resource('ledgers', LedgerController::class);
         Route::get('/ledgers/report', [LedgerController::class, 'report']);
         Route::resource('users', UserController::class);
+        Route::get('all-users', [UserController::class,'AllUsers']);
         Route::resource('customers', CustomerController::class);
          Route::apiResource('sales', SaleController::class);
         // Route::apiResource('purchases', PurchaseController::class);
