@@ -213,7 +213,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     public function update($request, $id)
     {
         $ledger = self::find($id);
-        $amount = $request['amount'];
+        if($ledger->ledger_type==$request['ledger_type']){
         $request['user_id']=$ledger->user_id?? null;
         $request['customer_id']=$ledger->customer_id?? null;
         $typeAndNewTotal = self::ledgerNewTotalAndType($request,$ledger->id);
@@ -243,6 +243,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         }
 
         return $ledger->fresh();
+        }
     }
 
 

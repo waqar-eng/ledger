@@ -87,4 +87,5 @@ public const LEDGER_CREATED= "Ledger created successfully";
 public const LEDGER_UPDATED= "Ledger updated successfully";
 public const LEDGER_DELETED= "Ledger deleted successfully";
 public const UPDATE_RESTRICTED= "Only latest record be able to edit";
+public const LEDGER_TYPE_RESTRICTED= "Ledger type is restricted to edit";
 }
