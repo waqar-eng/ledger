@@ -66,11 +66,15 @@ class LedgerController extends Controller
     public function update(LedgerRequest $request, $id)
     {
         try {
-            if($this->ledgerService->isLatestLedger($id)){
-                $user = $this->ledgerService->update($request->all(), $id);
-                return $this->success($user, Ledger::LEDGER_UPDATED);
-            }
+            if (! $this->ledgerService->isLatestLedger($id)) {
             return $this->error(Ledger::UPDATE_RESTRICTED, 500);
+            }
+
+            $ledger = $this->ledgerService->update($request->all(), $id);
+
+            return $ledger
+                ? $this->success($ledger, Ledger::LEDGER_UPDATED)
+                : $this->error(Ledger::LEDGER_TYPE_RESTRICTED, 500);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

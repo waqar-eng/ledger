@@ -21,15 +21,9 @@ return new class extends Migration {
             $table->decimal('remaining_amount', 10, 2)->default(0);
             $table->string('quantity')->nullable();
             $table->decimal('rate', 10, 2)->nullable();
-            $table->foreignId(column: 'customer_id')->nullable()->constrained('customers')
-            ->onDelete('cascade');
-           
-            $table->foreignId(column: 'user_id')->nullable()->constrained('users')
-            ->onDelete('cascade');
-            
-            $table->foreignId(column: 'category_id')->constrained('categories')
-            ->onDelete('cascade');
-
+            $table->foreignId(column: 'customer_id')->nullable();
+            $table->foreignId(column: 'user_id')->nullable();         
+            $table->foreignId(column: 'category_id');
             $table->softDeletes();     
             $table->timestamps();
         });
