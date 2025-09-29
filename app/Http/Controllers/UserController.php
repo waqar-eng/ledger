@@ -43,7 +43,7 @@ class UserController extends Controller
     public function store(UserRequest $request)
     {
         try {
-            $user = $this->userService->create($request->validated());
+            $user = $this->userService->create($request->all());
             return $this->success($user, User::USER_CREATED, 201);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

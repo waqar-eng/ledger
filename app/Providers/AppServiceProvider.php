@@ -47,12 +47,16 @@ use App\Services\Interfaces\InvestmentServiceInterface;
 use App\Services\InvestmentService;
 use App\Repositories\Interfaces\InvestmentRepositoryInterface;
 use App\Repositories\Interfaces\Log_activityRepositoryInterface;
+use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Repositories\InvestmentRepository;
 use App\Repositories\Log_activityRepository;
+use App\Repositories\StockRepository;
 use App\Services\CategoryService;
 use App\Services\Interfaces\CategoryServiceInterface;
 use App\Services\Interfaces\Log_activityServiceInterface;
+use App\Services\Interfaces\StockServiceInterface;
 use App\Services\Log_activityService;
+use App\Services\StockService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -91,6 +95,9 @@ class AppServiceProvider extends ServiceProvider
         //category
         $this->app->bind(CategoryServiceInterface::class, CategoryService::class);
         $this->app->bind(CategoryRepositoryInterface::class , CategoryRepository::class);
-
+        
+        $this->app->bind(StockServiceInterface::class, StockService::class);
+        $this->app->bind(StockRepositoryInterface::class , StockRepository::class);
+        
     }
 }
