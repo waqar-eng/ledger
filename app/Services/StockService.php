@@ -23,7 +23,7 @@ class StockService extends BaseService implements StockServiceInterface
     }
     private function buildQuery(array $filters, $start_date, $end_date, $perPage)
     {
-        return Stock::with(['ledger', 'category'])
+        return Stock::with(['ledger', 'ledger.category'])
             ->when($start_date && $end_date, fn($q) => app(LedgerService::class)->applyDateFilters($q, $start_date, $end_date))
              
             ->when(!empty($filters['ledger_type']), fn($q) =>
@@ -32,9 +32,9 @@ class StockService extends BaseService implements StockServiceInterface
                 )
             )
             
-            ->when(!empty($filters['category_name']), fn($q) =>
-            $q->whereHas('category', fn($catQ) =>
-                $catQ->where('categoryName', 'like', '%' . $filters['category_name'] . '%')
+            ->when(!empty($filters['category_id']), fn($q) =>
+            $q->whereHas('ledger.category', fn($catQ) =>
+                $catQ->where('category_id', 'like', '%' . $filters['category_id'] . '%')
                 )
             )
             ->orderByDesc('id')->paginate($perPage);
