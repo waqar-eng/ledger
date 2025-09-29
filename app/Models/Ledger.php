@@ -38,7 +38,7 @@ class Ledger extends Model
         'amount' => 'float',
         'total_amount' => 'float', // if needed
     ];
-
+    protected $hidden = ['deleted_at', 'updated_at'];
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -79,6 +79,10 @@ public function purchase()
 public function expense()
 {
     return $this->hasOne(Expense::class);
+}
+public function stock()
+{
+    return $this->hasOne(Stock::class);
 }
 
 public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transaction";

@@ -38,7 +38,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             'totals' => $totals
         ];
     }
-    private function parseDates($start, $end): array
+    public function parseDates($start, $end): array
     {
         if (!empty($start) && !empty($end)) {
             $start = Carbon::parse($start)->startOfDay();
@@ -63,7 +63,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             ->orderByDesc('id');
     }
 
-    private function applyDateFilters($query, $start_date, $end_date)
+    public function applyDateFilters($query, $start_date, $end_date)
     {
         return $query->whereBetween('created_at', [$start_date, $end_date]);
     }
@@ -156,12 +156,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         switch($request['ledger_type']){
             case 'sale':
                 Sale::create($request);
+                app(StockService::class)->updateStock($request);
                 break;
             case 'expense':
                 Expense::create($request);
                 break;
             case 'purchase':
                 app(PurchaseService::class)->createWithMoisture($request);
+                app(StockService::class)->updateStock($request);
                 break;
             case 'investment':
             case 'withdraw':

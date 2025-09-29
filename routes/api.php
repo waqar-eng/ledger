@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\StockController;
 
 Route::prefix('v1')->group(function () {
     //only login route public
@@ -28,6 +29,7 @@ Route::prefix('v1')->group(function () {
         Route::resource('investment', InvestmentController::class);
         Route::resource('/activity-logs', ActivityLogController::class);
         Route::resource('/categories', CategoryController::class);
+        Route::resource('stocks', StockController::class);
 
     });
 

@@ -12,6 +12,7 @@ class Category extends Model
 {
     use HasFactory, LogsActivity ,SoftDeletes;
     protected $fillable = ['categoryName'];
+    protected $hidden = ['deleted_at', 'updated_at'];
 
 
 
