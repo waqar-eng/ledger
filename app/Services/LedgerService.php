@@ -31,7 +31,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
         $allData = (clone $query)->get();
         $paginated = $query->paginate($perPage);
-        $totals = $this->calculateTotals($allData);
+        $totals = $this->calculateTotals($allData, $filters);
 
         return [
             'pagination' => $paginated,
@@ -68,13 +68,32 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         return $query->whereBetween('created_at', [$start_date, $end_date]);
     }
 
-    private function calculateTotals($data)
+    private function calculateTotals($data, $filters)
     {
+        $sale = $data->where('ledger_type', AppEnum::Sale)->sum('amount') ?? 0;
+        $purchase = $data->where('ledger_type', AppEnum::Purchase)->sum('amount') ?? 0;
+        $expense = $data->where('ledger_type', AppEnum::Expense)->sum('amount') ?? 0;
+        $investment = $data->where('ledger_type', AppEnum::Investment)->sum('amount') ?? 0;
+        $withdrawal = $data->where('ledger_type', AppEnum::Withdraw)->sum('amount') ?? 0;
+        $total_amount = optional($data->first())->total_amount ?? 0;
+        // Net total for the user (if user_id provided)
+        if(!empty($filters['user_id'])){
+            $total_amount = $investment - $withdrawal;
+        }
+        elseif (!empty($filters['category_id'])) {
+            $total_amount = ($sale + $investment) - ($purchase + $expense + $withdrawal);
+            if (!empty($filters['customer_id'])) {
+                $total_amount = ($purchase && $sale) ? ($purchase - $sale) : ($purchase ? $purchase : $sale);
+            }
+        }
+
         return [
-            'sale' => $data->where('ledger_type', 'sale')->sum('amount'),
-            'purchase' => $data->where('ledger_type', 'purchase')->sum('amount'),
-            'expense' => $data->where('ledger_type', 'expense')->sum('amount'),
-            'total_amount' => optional($data->first())->total_amount ?? 0,
+            'sale'        => $sale,
+            'purchase'    => $purchase,
+            'expense'     => $expense,
+            'investment'  => $investment,
+            'withdrawal'  => $withdrawal,
+            'total_amount'   => $total_amount,
         ];
     }
 

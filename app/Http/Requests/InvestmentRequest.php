@@ -20,7 +20,7 @@ class InvestmentRequest extends FormRequest
             'user_id' => ['required', 'exists:users,id'],
             'type' => [
                 'required',
-                Rule::in([AppEnum::Opening, AppEnum::Additional, AppEnum::Withdrawal]),
+                Rule::in([AppEnum::Opening, AppEnum::Additional, AppEnum::Withdraw]),
                 Rule::unique('investments')->where(function ($query) use ($userId) {
                     return $query->where('user_id', $userId)
                                 ->where('type', AppEnum::Opening); 
