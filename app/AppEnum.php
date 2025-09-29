@@ -8,7 +8,7 @@ enum AppEnum:string
 
     case Credit = 'credit';
 
-    case Withdrawal = 'withdrawal';
+    case Withdraw = 'withdraw';
 
     case Opening = 'opening';
 
