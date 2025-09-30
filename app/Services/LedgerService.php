@@ -162,7 +162,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
         //Step 1: Get the previous total amount from last valid ledger
         $amount = $request['amount'];
-
+        $lastQuantity=app(StockService::class)->checkStock($request);
         $typeAndNewtotal=self::ledgerNewTotalAndType($request);
 
        $newInvestment=self::investmentNewTotal($request);
@@ -175,14 +175,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         switch($request['ledger_type']){
             case 'sale':
                 Sale::create($request);
-                app(StockService::class)->updateStock($request);
+                app(StockService::class)->updateStock($request, $lastQuantity);
                 break;
             case 'expense':
                 Expense::create($request);
                 break;
             case 'purchase':
                 app(PurchaseService::class)->createWithMoisture($request);
-                app(StockService::class)->updateStock($request);
+                app(StockService::class)->updateStock($request, $lastQuantity);
                 break;
             case 'investment':
             case 'withdraw':
@@ -266,6 +266,9 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         return $ledger->fresh();
         }
     }
-
+    public function billNumber(){
+        $count = Ledger::count() ?? 0;
+        return $count + 1;
+    }
 
 }

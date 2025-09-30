@@ -89,4 +89,13 @@ class LedgerController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+    public function billNumber()
+    {
+        try {
+            $billNumber=$this->ledgerService->billNumber();
+            return $this->success($billNumber, Ledger::BILL_NUMBER_SUCCESS);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 }
