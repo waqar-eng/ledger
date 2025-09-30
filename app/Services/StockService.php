@@ -40,9 +40,7 @@ class StockService extends BaseService implements StockServiceInterface
             ->orderByDesc('id')->paginate($perPage);
     }
 
-    public function updateStock(array $data)
-    {
-         // Fetch last stock record for this category
+    public function checkStock($data)  {
         $lastStock = Stock::where('category_id', $data['category_id'])
             ->latest('id')
             ->first();
@@ -54,6 +52,14 @@ class StockService extends BaseService implements StockServiceInterface
             if ($lastQuantity < $data['quantity']) {
                 throw new \Exception("Not enough stock available. Only {$lastQuantity} left.");
             }
+            return $lastQuantity;
+        }
+        
+    }
+
+    public function updateStock(array $data, $lastQuantity)
+    {
+        if ($data['ledger_type'] === AppEnum::Sale->value) {
 
             $newQuantity = $lastQuantity - $data['quantity'];
         } else {
