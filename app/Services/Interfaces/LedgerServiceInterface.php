@@ -9,6 +9,6 @@ interface LedgerServiceInterface extends BaseServiceInterface
     
     public function billNumber();
 
-    public function report();
+    public function report($request);
     
 }

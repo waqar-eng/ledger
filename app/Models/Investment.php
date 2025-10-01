@@ -12,6 +12,10 @@ class Investment extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function ledger()
+    {
+        return $this->belongsTo(Ledger::class);
+    }
 
     public const INVESTMENT_SAVE_SUCCESS= "Investment sotred successfully";
     public const INVESTMENT_RETRIVE_SUCCESS= "Investments retrived successfully";

@@ -16,12 +16,11 @@ class StockService extends BaseService implements StockServiceInterface
     }
     public function findAll($filters)
    {
-        $perPage = $filters['per_page'] ?? AppConstants::DEFAULT_PER_PAGE;
         [$start_date, $end_date] = app(LedgerService::class)->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
-        return $this->buildQuery($filters, $start_date, $end_date, $perPage);
+        return $this->buildQuery($filters, $start_date, $end_date);
     }
-    private function buildQuery(array $filters, $start_date, $end_date, $perPage)
+    private function buildQuery(array $filters, $start_date, $end_date)
     {
         return Stock::with(['category'])
             ->when($start_date && $end_date, fn($q) => app(LedgerService::class)->applyDateFilters($q, $start_date, $end_date))
@@ -31,7 +30,7 @@ class StockService extends BaseService implements StockServiceInterface
                 $catQ->where('category_id', 'like', '%' . $filters['category_id'] . '%')
                 )
             )
-            ->orderByDesc('id')->paginate($perPage);
+            ->orderByDesc('id')->get();
     }
 
     public function checkStock($data)  {
