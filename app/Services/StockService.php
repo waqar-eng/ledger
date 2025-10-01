@@ -23,17 +23,11 @@ class StockService extends BaseService implements StockServiceInterface
     }
     private function buildQuery(array $filters, $start_date, $end_date, $perPage)
     {
-        return Stock::with(['ledger', 'ledger.category'])
+        return Stock::with(['category'])
             ->when($start_date && $end_date, fn($q) => app(LedgerService::class)->applyDateFilters($q, $start_date, $end_date))
-             
-            ->when(!empty($filters['ledger_type']), fn($q) =>
-            $q->whereHas('ledger', fn($catQ) =>
-                $catQ->where('ledger_type', 'like', '%' . $filters['ledger_type'] . '%')
-                )
-            )
             
             ->when(!empty($filters['category_id']), fn($q) =>
-            $q->whereHas('ledger.category', fn($catQ) =>
+            $q->whereHas('category', fn($catQ) =>
                 $catQ->where('category_id', 'like', '%' . $filters['category_id'] . '%')
                 )
             )
@@ -41,9 +35,7 @@ class StockService extends BaseService implements StockServiceInterface
     }
 
     public function checkStock($data)  {
-        $lastStock = Stock::where('category_id', $data['category_id'])
-            ->latest('id')
-            ->first();
+        $lastStock = Stock::where('category_id', $data['category_id'])->first();
 
         $lastQuantity = $lastStock?->total_quantity ?? 0;
 
@@ -52,8 +44,8 @@ class StockService extends BaseService implements StockServiceInterface
             if ($lastQuantity < $data['quantity']) {
                 throw new \Exception("Not enough stock available. Only {$lastQuantity} left.");
             }
-            return $lastQuantity;
         }
+        return $lastQuantity;
         
     }
 
@@ -66,12 +58,12 @@ class StockService extends BaseService implements StockServiceInterface
             // Default: purchase or other types increase stock
             $newQuantity = $lastQuantity + $data['quantity'];
         }
-
-        return Stock::create([
-            'ledger_id'      => $data['ledger_id'],
-            'category_id'    => $data['category_id'],
-            'total_quantity' => $newQuantity,
-        ]);
+        return Stock::updateOrCreate(
+            ['category_id' => $data['category_id']], // condition to match
+            [
+                'total_quantity' => $newQuantity,
+            ]
+        );
     }
 
 

@@ -80,6 +80,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         if(!empty($filters['user_id'])){
             $total_amount = $investment - $withdrawal;
         }
+        elseif($filters['ledger_type']== 'withdraw'){
+            $total_amount = $withdrawal;
+        }
+        elseif($filters['ledger_type']=='investment'){
+            $total_amount = $investment;
+        }
         elseif (!empty($filters['category_id'])) {
             $total_amount = ($sale + $investment) - ($purchase + $expense + $withdrawal);
             if (!empty($filters['customer_id'])) {
@@ -269,6 +275,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     public function billNumber(){
         $count = Ledger::count() ?? 0;
         return $count + 1;
+    }
+    
+    public function report(){
+        return app(ReportService::class)->generateReport();
     }
 
 }

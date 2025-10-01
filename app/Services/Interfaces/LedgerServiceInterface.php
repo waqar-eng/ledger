@@ -8,5 +8,7 @@ interface LedgerServiceInterface extends BaseServiceInterface
     public function findAll(array $filters);
     
     public function billNumber();
+
+    public function report();
     
 }

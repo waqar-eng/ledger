@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\Customer;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -14,12 +16,45 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Users
+        $users = [
+            [
+                'name' => 'Admin User',
+                'email' => 'admin@zee.com',
+                'user_type'=> 'owner',
+                'password' => Hash::make('admin@zee$#1'),
+            ],
+            [
+                'name' => 'Investor User',
+                'email' => 'user@zee.com',
+                'user_type'=> 'investor',
+                'password' => Hash::make('112233'),
+            ],
+        ];
+        User::insert($users);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'admin@zee.com',
-            'password' => Hash::make('admin@zee$#1')
-        ]);
+          // Categories
+        $categories = [
+            ['categoryName' => 'Kapas'],
+            ['categoryName' => 'Makai'],
+        ];
+        Category::insert($categories);
+
+        // cutomers
+        $cutomers = [
+            [
+                'name' => 'Ali',
+                'email' => 'ali@zee.com',
+                'phone_number' => '03001234567',
+                'address'=>"abc city"
+            ],
+            [
+                'name' => 'Second User',
+                'email' => 'user@zee.com',
+                'phone_number' => '03000234567',
+                'address'=>"abc city"
+            ],
+        ];
+        Customer::insert($cutomers);
     }
 }

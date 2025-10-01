@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->decimal('rate', 10, 2)->nullable();
             $table->foreignId(column: 'customer_id')->nullable();
             $table->foreignId(column: 'user_id')->nullable();         
-            $table->foreignId(column: 'category_id');
+            $table->foreignId(column: 'category_id')->nullable();
             $table->softDeletes();     
             $table->timestamps();
         });
