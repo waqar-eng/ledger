@@ -18,7 +18,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('user-details',[UserController::class, 'userDetails']);
         Route::get('/ledgers/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
-        Route::get('/ledgers/report', [LedgerController::class, 'report']);
+        Route::get('/ledgers/reports', [LedgerController::class, 'report']);
         Route::get('ledgers/bill-number', [LedgerController::class, 'billNumber']);
         Route::resource('ledgers', LedgerController::class);
         Route::resource('users', UserController::class);

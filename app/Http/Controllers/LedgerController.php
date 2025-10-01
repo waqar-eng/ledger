@@ -8,7 +8,7 @@ use App\Models\Ledger;
 use App\Services\Interfaces\LedgerServiceInterface;
 use Exception;
 use App\Services\LedgerService;
-
+use Illuminate\Http\Request;
 
 class LedgerController extends Controller
 {
@@ -98,11 +98,11 @@ class LedgerController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
-    public function report()
+    public function report(Request $request)
     {
         try {
-            $report=$this->ledgerService->report();
-            return $this->success($report, Ledger::BILL_NUMBER_SUCCESS);
+            $report=$this->ledgerService->report($request->all());
+            return $this->success($report, Ledger::REPORT_SUCCESS);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
