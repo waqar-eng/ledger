@@ -31,6 +31,7 @@ class CustomerController extends Controller
 
     public function store(CustomerRequest $request)
     {
+        return $request;
         try {
             $customer = $this->customerService->create($request->validated());
             return $this->success($customer, Customer::CUSTOMER_CREATED, 201);
