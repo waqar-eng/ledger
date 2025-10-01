@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ledger_id');
-            $table->foreignId('category_id');
+            $table->foreignId('category_id')->unique();
             $table->float('total_quantity');
             $table->timestamps();
         });

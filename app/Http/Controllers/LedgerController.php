@@ -98,4 +98,13 @@ class LedgerController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+    public function report()
+    {
+        try {
+            $report=$this->ledgerService->report();
+            return $this->success($report, Ledger::BILL_NUMBER_SUCCESS);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 }

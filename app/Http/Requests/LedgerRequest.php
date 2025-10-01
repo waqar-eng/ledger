@@ -22,7 +22,7 @@ class LedgerRequest extends FormRequest
             'customer_id'     => [
                 'nullable',
                 'exists:customers,id',
-                'required_unless:ledger_type,withdraw,investment',
+                'required_unless:ledger_type,withdraw,investment,expense',
             ],
             'user_id'         => [
                 'nullable',

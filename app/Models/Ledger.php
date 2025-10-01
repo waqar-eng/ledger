@@ -93,4 +93,5 @@ public const LEDGER_DELETED= "Ledger deleted successfully";
 public const UPDATE_RESTRICTED= "Only latest record be able to edit";
 public const LEDGER_TYPE_RESTRICTED= "Ledger type is restricted to edit";
 public const BILL_NUMBER_SUCCESS= "Bill number created successfully";
+public const REPORT_SUCCESS= "Reports fetched successfully";
 }
