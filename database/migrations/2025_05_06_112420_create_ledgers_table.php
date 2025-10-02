@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->decimal('amount', 10, 2);
             $table->enum('type', ['credit', 'debit']);
             $table->date('date')->default(now());
-            $table->enum('ledger_type', ['sale', 'purchase', 'expense', 'investment', 'withdraw' ,'repayment' ,'other']);
+            $table->enum('ledger_type', ['sale', 'purchase', 'expense', 'investment', 'withdraw' ,'repayment','moisture_loss' ,'other']);
             $table->decimal('total_amount', 15, 2)->nullable();
             $table->enum('payment_type', ['cash', 'loan', 'mix'])->nullable();
             $table->enum('payment_method', ['cash', 'bank'])->nullable();

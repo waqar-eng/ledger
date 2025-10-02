@@ -20,6 +20,8 @@ enum AppEnum:string
 
     case Sale = 'sale';
 
+    case MoistureLoss = 'moisture_loss';
+
     case Purchase ='purchase';
 
     case Expense = 'expense';

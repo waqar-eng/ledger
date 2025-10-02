@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\DeletionPeriod;
+use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\User;
@@ -43,6 +45,12 @@ class DatabaseSeeder extends Seeder
         // cutomers
         $cutomers = [
             [
+                'name' => 'walk-in customer',
+                'email' => 'walkincustomer@gmail.com',
+                'phone_number' => '03001034567',
+                'address'=>"walkincustomer"
+            ],
+            [
                 'name' => 'Ali',
                 'email' => 'ali@zee.com',
                 'phone_number' => '03001234567',
@@ -56,5 +64,10 @@ class DatabaseSeeder extends Seeder
             ],
         ];
         Customer::insert($cutomers);
+        // app settings
+        AppSetting::updateOrCreate(
+            ['key' => 'deletion_period'],
+            ['value' => DeletionPeriod::OneWeek->value]
+        );
     }
 }
