@@ -58,7 +58,7 @@ class ReportService
         $withdrawals = Investment::where('type', AppEnum::Withdraw->value)->when(true, $applyFilters)->sum('amount');
 
         // Available stocks (filter category if requested)
-        $stocksQuery = Stock::latest('id');
+        $stocksQuery = Stock::with('category')->latest('id');
         if ($categoryId) {
             $stocksQuery->where('category_id', $categoryId);
         }
@@ -66,7 +66,16 @@ class ReportService
         $stocks = $stocksQuery
             ->get()
             ->groupBy('category_id')
-            ->map(fn($rows) => $rows->sum('total_quantity'));
+            ->map(function ($rows, $categoryId) {
+                $firstRow = $rows->first();
+            return [
+                'id'            => $firstRow->id ?? null,
+                'category_id'   => $categoryId,
+                'total_quantity'=>$rows->sum('total_quantity'),
+                'category'      => $firstRow->category,
+            ];
+            })
+            ->values();
 
         // Profit calculations
         $grossProfit = $sales - $purchases;

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\AppEnum;
 use App\Constants\AppConstants;
+use App\Jobs\RecalculateTotalsJob;
 use App\Repositories\Interfaces\LedgerRepositoryInterface;
 use App\Services\Interfaces\LedgerServiceInterface;
 use App\Models\Ledger;
@@ -105,7 +106,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     public static function getLedgerType($ledger_type)
     {
         return match ($ledger_type) {
-            'purchase', 'expense', 'withdraw', 'repayment', 'other' => AppEnum::Debit->value,
+            'purchase', 'expense', 'withdraw', 'repayment', 'moisture_loss', 'other' => AppEnum::Debit->value,
             'sale', 'investment' => AppEnum::Credit->value,
 
             default => throw ValidationException::withMessages([
@@ -172,7 +173,6 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $lastQuantity = app(StockService::class)->checkStock($request);
         $typeAndNewtotal = self::ledgerNewTotalAndType($request);
 
-        $newInvestment = self::investmentNewTotal($request);
         // Set derived fields in request data
         $request['type'] = $typeAndNewtotal['type'];
         $request['total_amount'] = $typeAndNewtotal['newTotal'];
@@ -187,12 +187,18 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             case 'expense':
                 Expense::create($request);
                 break;
+            case 'moisture_loss':
+                $request['loss_quantity'] = $request['quantity'];
+                Expense::create($request);
+                app(StockService::class)->updateStock($request, $lastQuantity);
+                break;
             case 'purchase':
                 app(PurchaseService::class)->createWithMoisture($request);
                 app(StockService::class)->updateStock($request, $lastQuantity);
                 break;
             case 'investment':
             case 'withdraw':
+                $newInvestment = self::investmentNewTotal($request);
                 Investment::create([
                     'ledger_id' => $ledger->id,
                     'user_id'      => $request['user_id'],
@@ -243,12 +249,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         $ledger = self::find($id);
         if ($ledger->ledger_type == $request['ledger_type']) {
+            $lastQuantity = app(StockService::class)->checkStock($request);
             $request['user_id'] = $ledger->user_id ?? null;
             $request['customer_id'] = $ledger->customer_id ?? null;
             $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
             $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
             $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
             // Update ledger itself
+            if($request['ledger_type']!=='moisture_loss')
             $ledger->update($request);
             $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
 
@@ -259,8 +267,30 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     break;
                 case 'purchase':
                     app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
+                    app(StockService::class)->updateStock($request, $lastQuantity);
                     break;
                 case 'expense':
+                    $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                    break;
+                case 'moisture_loss':
+                    $request['loss_quantity'] = $request['quantity'];
+
+                    // 1. Capture old quantity before updating ledger
+                    $oldQuantity = $ledger->quantity ?? 0;
+
+                    // 2. Get current stock
+                    $currentStock = app(StockService::class)->checkStock($request);
+
+                    // 3. Restore old deducted quantity
+                    $restoredStock = $currentStock + $oldQuantity;
+
+                    // 4. Apply new deduction
+                    app(StockService::class)->updateStock($request, $restoredStock);
+
+                    // 5. Update ledger AFTER stock adjustment
+                    $ledger->update($request);
+
+                    // 6. Update expense relation
                     $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
                     break;
                 case 'investment':
@@ -314,54 +344,27 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 case 'withdraw':
                     $invId = $ledger->investment?->id;
                     $ledger->investment?->delete();
-                    // Adjust totals for investments
-                    $this->recalcTotals(
-                        Investment::class,
-                        'type',       // "investment" or "withdraw"
+                    // Dispatch recalculation in queue
+                    RecalculateTotalsJob::dispatch(
+                        \App\Models\Investment::class,
+                        'type',
                         'amount',
                         $invId ?? 0,
-                        ['user_id' => $ledger->user_id] // keep user scoped
+                        ['user_id' => $ledger->user_id]
                     );
                     break;
             }
 
             $ledger->delete();
 
-            // Adjust totals for subsequent ledgers
-            $this->recalcTotals(
-                Ledger::class,
+            // Dispatch recalculation for ledgers in queue
+            RecalculateTotalsJob::dispatch(
+                \App\Models\Ledger::class,
                 'type',
                 'amount',
                 $id
             );
             return true;
         });
-    }
-    private function recalcTotals($model, $typeField, $amountField, $id, $extraWhere = [])
-    {
-        // Get all records > $id (subsequent)
-        $query = $model::where('id', '>', $id)->orderBy('id');
-        if (!empty($extraWhere)) {
-            $query->where($extraWhere);
-        }
-        $subsequentRows = $query->get();
-
-        // Get the last valid total before $id
-        $previousTotalQuery = $model::where('id', '<', $id);
-        if (!empty($extraWhere)) {
-            $previousTotalQuery->where($extraWhere);
-        }
-        $previousTotal = $previousTotalQuery->latest('id')->value('total_amount') ?? 0;
-
-        // ✅ Recalculate each subsequent record
-        foreach ($subsequentRows as $row) {
-            if ($row->{$typeField} === 'credit' || $row->{$typeField} === 'investment') {
-                $previousTotal += $row->{$amountField};
-            } elseif ($row->{$typeField} === 'debit' || $row->{$typeField} === 'withdraw') {
-                $previousTotal -= $row->{$amountField};
-            }
-
-            $row->update(['total_amount' => $previousTotal]);
-        }
     }
 }

@@ -50,7 +50,7 @@ class StockService extends BaseService implements StockServiceInterface
 
     public function updateStock(array $data, $lastQuantity)
     {
-        if ($data['ledger_type'] === AppEnum::Sale->value) {
+        if ($data['ledger_type'] === AppEnum::Sale->value || $data['ledger_type'] === AppEnum::MoistureLoss->value) {
 
             $newQuantity = $lastQuantity - $data['quantity'];
         } else {
