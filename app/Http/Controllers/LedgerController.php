@@ -80,11 +80,13 @@ class LedgerController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(LedgerRequest $request)
     {
         try {
-            $this->ledgerService->delete($id);
-            return $this->success(null, Ledger::LEDGER_DELETED);
+            $res=$this->ledgerService->delete($request->id);
+            if($res)
+            return $this->success($res, Ledger::LEDGER_DELETED);
+            return $this->error($res);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

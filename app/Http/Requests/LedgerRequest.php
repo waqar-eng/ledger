@@ -7,6 +7,12 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 class LedgerRequest extends FormRequest
 {
+     public function all($keys = null){
+        $data = parent::all();
+        $data['id'] = $this->route('ledger');
+        return $data;
+    }
+
     public function authorize()
     {
         return true; // Allow all for now
@@ -47,6 +53,7 @@ class LedgerRequest extends FormRequest
 
 
         ];
+        $idRule=['id'  => 'required|integer|exists:ledgers,id'];
         switch ($this->method()) {
             case 'GET':
                 return $getRules;
@@ -54,6 +61,8 @@ class LedgerRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return $postRules;
+            case 'DELETE':
+                return $idRule;
             default:
                 return $getRules;
         }
