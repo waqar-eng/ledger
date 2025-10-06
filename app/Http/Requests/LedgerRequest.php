@@ -35,6 +35,11 @@ class LedgerRequest extends FormRequest
                 'exists:users,id',
                 'required_if:ledger_type,withdraw,investment',
             ],
+            'category_id'         => [
+                'nullable',
+                'exists:categories,id',
+                'required_if:ledger_type,moisture_loss,sale,purchase',
+            ],
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','repayment','moisture_loss','other'])],
                 'payment_type' => ['nullable', Rule::in(['cash', 'loan', 'mix'])],
                 'payment_method' => ['nullable', Rule::in(['cash', 'bank'])],
