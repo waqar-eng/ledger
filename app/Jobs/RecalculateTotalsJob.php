@@ -17,17 +17,19 @@ class RecalculateTotalsJob implements ShouldQueue
     protected $amountField;
     protected $id;
     protected $extraWhere;
+    protected $startingTotal;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($model, $typeField, $amountField, $id, $extraWhere = [])
+    public function __construct($model, $typeField, $amountField, $id, $extraWhere = [], $startingTotal = null)
     {
         $this->model = $model;
         $this->typeField = $typeField;
         $this->amountField = $amountField;
         $this->id = $id;
         $this->extraWhere = $extraWhere;
+        $this->startingTotal = $startingTotal;
     }
 
     /**
@@ -40,13 +42,17 @@ class RecalculateTotalsJob implements ShouldQueue
             $query->where($this->extraWhere);
         }
         $subsequentRows = $query->get();
-
+        // Determine the previous total to start the running sum
+        if ($this->startingTotal !== null) {
+            // Use provided starting total (update case)
+            $previousTotal = $this->startingTotal;
+        } else {
         $previousTotalQuery = $this->model::where('id', '<', $this->id);
         if (!empty($this->extraWhere)) {
             $previousTotalQuery->where($this->extraWhere);
         }
         $previousTotal = $previousTotalQuery->latest('id')->value('total_amount') ?? 0;
-
+        }
         foreach ($subsequentRows as $row) {
             if ($row->{$this->typeField} === 'credit' || $row->{$this->typeField} === 'investment') {
                 $previousTotal += $row->{$this->amountField};

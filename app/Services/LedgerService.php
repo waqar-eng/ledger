@@ -14,6 +14,7 @@ use App\Models\Expense;
 use App\Models\Investment;
 use App\Models\Purchase;
 use App\Models\Stock;
+use App\Services\Helpers\LedgerHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -167,7 +168,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     public function create($request)
     {
-
+        return DB::transaction(function () use ($request) {
         //Step 1: Get the previous total amount from last valid ledger
         $amount = $request['amount'];
         $lastQuantity = app(StockService::class)->checkStock($request);
@@ -210,6 +211,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 break;
         }
         return $ledger;
+    });
     }
 
     public function getDashboardSummary(): array
@@ -247,62 +249,85 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public function update($request, $id)
     {
-        $ledger = self::find($id);
-        if ($ledger->ledger_type == $request['ledger_type']) {
-            $lastQuantity = app(StockService::class)->checkStock($request);
-            $request['user_id'] = $ledger->user_id ?? null;
-            $request['customer_id'] = $ledger->customer_id ?? null;
-            $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
-            $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
-            $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
-            // Update ledger itself
-            if($request['ledger_type']!=='moisture_loss')
-            $ledger->update($request);
-            $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
+        return DB::transaction(function () use ($request, $id) {
+            $ledger = self::find($id);
+            if ($ledger->ledger_type == $request['ledger_type']) {
+                $lastQuantity = app(StockService::class)->checkStock($request);
+                $request['customer_id'] = LedgerHelper::requiresCustomer($request['ledger_type'])
+                    ? $ledger->customer_id
+                    : null;
 
-            // Update relation based on ledger_type
-            switch ($request['ledger_type']) {
-                case 'sale':
-                    $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                    break;
-                case 'purchase':
-                    app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
-                    app(StockService::class)->updateStock($request, $lastQuantity);
-                    break;
-                case 'expense':
-                    $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                    break;
-                case 'moisture_loss':
-                    $request['loss_quantity'] = $request['quantity'];
+                $request['user_id'] = LedgerHelper::requiresCustomer($request['ledger_type'])
+                    ? null
+                    : $ledger->user_id;
+                $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
+                $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
+                $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
+                // Update ledger itself
+                if($request['ledger_type']!=='moisture_loss')
+                $ledger->update($request);
+                $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
 
-                    // 1. Capture old quantity before updating ledger
-                    $oldQuantity = $ledger->quantity ?? 0;
+                // Update relation based on ledger_type
+                switch ($request['ledger_type']) {
+                    case 'sale':
+                        $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                    case 'purchase':
+                        app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
+                        app(StockService::class)->updateStock($request, $lastQuantity);
+                        break;
+                    case 'expense':
+                        $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                    case 'moisture_loss':
+                        $request['loss_quantity'] = $request['quantity'];
+                        // 1. Capture old quantity before updating ledger
+                        $oldQuantity = $ledger->quantity ?? 0;
+                        // 2. Get current stock
+                        $currentStock = app(StockService::class)->checkStock($request);
+                        // 3. Restore old deducted quantity
+                        $restoredStock = $currentStock + $oldQuantity;
+                        // 4. Apply new deduction
+                        app(StockService::class)->updateStock($request, $restoredStock);
+                        // 5. Update ledger AFTER stock adjustment
+                        $ledger->update($request);
+                        // 6. Update expense relation
+                        $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                    case 'investment':
+                    case 'withdraw':
+                        $request['total_amount'] = $newInvestment;
+                        $request['type']         = $request['ledger_type'];
+                        Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                }
+                $ledger= $ledger->fresh();
+                // ✅ Dispatch recalculation jobs (same as delete)
+                
+                RecalculateTotalsJob::dispatch(
+                    \App\Models\Ledger::class,
+                    'type',
+                    'amount',
+                    $ledger->id,
+                    [],
+                    $ledger->total_amount
+                );
+                if (in_array($ledger->ledger_type, ['investment', 'withdraw'])) {
+                            RecalculateTotalsJob::dispatch(
+                                \App\Models\Investment::class,
+                                'type',
+                                'amount',
+                                $ledger->investment?->id ?? 0,
+                                ['user_id' => $ledger->user_id],
+                                $newInvestment
+                            );
+                    }
 
-                    // 2. Get current stock
-                    $currentStock = app(StockService::class)->checkStock($request);
-
-                    // 3. Restore old deducted quantity
-                    $restoredStock = $currentStock + $oldQuantity;
-
-                    // 4. Apply new deduction
-                    app(StockService::class)->updateStock($request, $restoredStock);
-
-                    // 5. Update ledger AFTER stock adjustment
-                    $ledger->update($request);
-
-                    // 6. Update expense relation
-                    $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                    break;
-                case 'investment':
-                case 'withdraw':
-                    $request['total_amount'] = $newInvestment;
-                    $request['type']         = $request['ledger_type'];
-                    Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
-                    break;
+                
             }
-
-            return $ledger->fresh();
-        }
+            return $ledger;
+        });
     }
     public function billNumber()
     {
@@ -336,6 +361,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         ->decrement('total_quantity', $ledger->quantity);
                     break;
 
+                case 'moisture_loss':
+                    // Restore the previously deducted stock
+                    Stock::where('category_id', $ledger->category_id)
+                        ->increment('total_quantity', $ledger->quantity);
+
+                    // Delete the linked expense (if any)
+                    $ledger->expense?->delete();
+                    break;
                 case 'expense':
                     $ledger->expense?->delete();
                     break;

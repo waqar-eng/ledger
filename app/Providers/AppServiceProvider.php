@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Ledger;
+use App\Policies\LedgerPolicy;
 use App\Repositories\CategoryRepository;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
@@ -60,6 +62,10 @@ use App\Services\StockService;
 
 class AppServiceProvider extends ServiceProvider
 {
+    protected $policies = [
+        Ledger::class => LedgerPolicy::class,
+    ];
+    
     public function register()
     {
         // User
