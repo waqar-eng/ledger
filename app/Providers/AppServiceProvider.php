@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Models\Ledger;
 use App\Policies\LedgerPolicy;
+use App\Repositories\AppSettingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
@@ -37,7 +37,7 @@ use App\Services\Interfaces\ExpenseServiceInterface;
 use App\Services\ExpenseService;
 use App\Repositories\Interfaces\ExpenseRepositoryInterface;
 use App\Repositories\ExpenseRepository;
-
+use App\Repositories\Interfaces\AppSettingRepositoryInterface;
 // Purchase bindings
 use App\Services\Interfaces\PurchaseServiceInterface;
 use App\Services\PurchaseService;
@@ -53,18 +53,25 @@ use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Repositories\InvestmentRepository;
 use App\Repositories\Log_activityRepository;
 use App\Repositories\StockRepository;
+use App\Services\AppSettingService;
 use App\Services\CategoryService;
+use App\Services\Interfaces\AppSettingServiceInterface;
 use App\Services\Interfaces\CategoryServiceInterface;
 use App\Services\Interfaces\Log_activityServiceInterface;
 use App\Services\Interfaces\StockServiceInterface;
 use App\Services\Log_activityService;
 use App\Services\StockService;
+use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
-    protected $policies = [
-        Ledger::class => LedgerPolicy::class,
-    ];
+    public function boot(): void
+    {
+        Gate::guessPolicyNamesUsing(function ($modelClass) {
+            // Always use the same LedgerPolicy for all models
+            return LedgerPolicy::class;
+        });
+    }
     
     public function register()
     {
@@ -104,6 +111,9 @@ class AppServiceProvider extends ServiceProvider
         
         $this->app->bind(StockServiceInterface::class, StockService::class);
         $this->app->bind(StockRepositoryInterface::class , StockRepository::class);
+        
+        $this->app->bind(AppSettingServiceInterface::class, AppSettingService::class);
+        $this->app->bind(AppSettingRepositoryInterface::class , AppSettingRepository::class);
         
     }
 }

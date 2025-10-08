@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AppSettingController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\SaleController;
@@ -31,6 +32,7 @@ Route::prefix('v1')->group(function () {
         Route::resource('/activity-logs', ActivityLogController::class);
         Route::resource('/categories', CategoryController::class);
         Route::resource('stocks', StockController::class);
+        Route::resource('app-settings', AppSettingController::class);
 
     });
 

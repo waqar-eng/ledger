@@ -50,9 +50,8 @@ class CategoryController extends Controller
 
     public function update(CategoryRequest $request )
     {
-       // return $request;
         try {
-
+            $this->authorizeModelAction('update', Category::class, $request['id']);
             $category = $this->categoryService->update($request->array(), $request->id);
 
             return $this->success($category, Category::CATEGORY_UPDATED);
@@ -64,6 +63,7 @@ class CategoryController extends Controller
     public function destroy(CategoryRequest $request)
     {
         try {
+            $this->authorizeModelAction('delete', Category::class, $request['id']);
             $this->categoryService->delete($request->id);
             return $this->success(null, Category::CATEGORY_DELETED);
         } catch (Exception $e) {

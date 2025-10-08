@@ -49,9 +49,9 @@ class CustomerController extends Controller
     }
 
     public function update(CustomerRequest $request)
-    {  // return $request;
+    { 
         try {
-            //$request = $request->validated();
+            $this->authorizeModelAction('update', Customer::class, $request['id']);
             $customer = $this->customerService->update($request->array() , $request->id);
             return $this->success($customer, Customer::CUSTOMER_UPDATED);
         } catch (Exception $e) {
@@ -62,6 +62,7 @@ class CustomerController extends Controller
     public function destroy($id)
     {
         try {
+            $this->authorizeModelAction('delete', Customer::class, $id);
             $this->customerService->delete($id);
             return $this->success(null, Customer::CUSTOMER_DELETED);
         } catch (Exception $e) {
