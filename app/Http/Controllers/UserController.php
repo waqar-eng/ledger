@@ -7,13 +7,11 @@ use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
 use Exception;
-use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-
     protected $userService;
 
     public function __construct(UserServiceInterface $userService)
@@ -63,6 +61,7 @@ class UserController extends Controller
     public function update(UserRequest $request, $id)
     {
         try {
+            $this->authorizeModelAction('update', User::class, $id);
             $request = $request->validated();
             $user = $this->userService->update($request, $id);
             return $this->success($user, User::USER_UPDATED);
@@ -74,6 +73,7 @@ class UserController extends Controller
     public function destroy($id)
     {
         try {
+            $this->authorizeModelAction('delete', User::class, $id);
             $this->userService->delete($id);
             return $this->success(null, User::USER_DELETED);
         } catch (Exception $e) {

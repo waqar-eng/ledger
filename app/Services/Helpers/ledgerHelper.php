@@ -3,6 +3,7 @@
 namespace App\Services\Helpers;
 
 use App\AppEnum;
+use App\Services\StockService;
 
 class LedgerHelper
 {
@@ -13,5 +14,17 @@ class LedgerHelper
             AppEnum::Withdraw->value,
             AppEnum::MoistureLoss->value,
         ], true);
+    }
+    public static function adjustStockOnUpdate($ledger, $request)
+    {
+        $stockService = app(StockService::class);
+        $oldQty = $ledger->quantity ?? 0;
+        $currentStock = $stockService->checkStock($request);
+
+        return match ($request['ledger_type']) {
+            'sale', 'moisture_loss' => $stockService->updateStock($request, $currentStock + $oldQty),
+            'purchase' => $stockService->updateStock($request, $currentStock - $oldQty),
+            default => null,
+        };
     }
 }

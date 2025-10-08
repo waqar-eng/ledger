@@ -2,7 +2,7 @@
 
 namespace App;
 
-enum DeletionPeriod:string
+enum AppSettingPeriod:string
 {
     case OneDay = '1_day';
     case OneWeek = '1_week';

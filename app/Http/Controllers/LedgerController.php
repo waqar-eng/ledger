@@ -8,12 +8,10 @@ use App\Models\Ledger;
 use App\Services\Interfaces\LedgerServiceInterface;
 use Exception;
 use App\Services\LedgerService;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class LedgerController extends Controller
 {
-    use AuthorizesRequests;
     protected LedgerService $ledgerService;
 
     public function __construct(LedgerServiceInterface $ledgerService)
@@ -65,6 +63,7 @@ class LedgerController extends Controller
     public function update(LedgerRequest $request, $id)
     {
         try {
+            $this->authorizeModelAction('update', Ledger::class, $id);
             $ledger = $this->ledgerService->update($request->all(), $id);
 
             return $ledger
@@ -78,8 +77,7 @@ class LedgerController extends Controller
     public function destroy(LedgerRequest $request)
     {
         try {
-            // $ledger = Ledger::findOrFail($request->id);
-            // $this->authorize('delete', $ledger);
+            $this->authorizeModelAction('delete', Ledger::class, $request->id);
             $res=$this->ledgerService->delete($request->id);
             if($res)
             return $this->success($res, Ledger::LEDGER_DELETED);

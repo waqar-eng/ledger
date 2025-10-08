@@ -264,35 +264,31 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
                 $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
                 // Update ledger itself
-                if($request['ledger_type']!=='moisture_loss')
+                if($request['ledger_type']!=='moisture_loss' && $request['ledger_type']!=='purchase' && $request['ledger_type']!=='sale')
                 $ledger->update($request);
                 $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
 
                 // Update relation based on ledger_type
                 switch ($request['ledger_type']) {
                     case 'sale':
+                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
+                        // Update sale relation
                         $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        // Finally, update the ledger record
+                        $ledger->update($request);
                         break;
                     case 'purchase':
+                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
-                        app(StockService::class)->updateStock($request, $lastQuantity);
+                        $ledger->update($request);
                         break;
                     case 'expense':
                         $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
                         break;
                     case 'moisture_loss':
                         $request['loss_quantity'] = $request['quantity'];
-                        // 1. Capture old quantity before updating ledger
-                        $oldQuantity = $ledger->quantity ?? 0;
-                        // 2. Get current stock
-                        $currentStock = app(StockService::class)->checkStock($request);
-                        // 3. Restore old deducted quantity
-                        $restoredStock = $currentStock + $oldQuantity;
-                        // 4. Apply new deduction
-                        app(StockService::class)->updateStock($request, $restoredStock);
-                        // 5. Update ledger AFTER stock adjustment
+                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         $ledger->update($request);
-                        // 6. Update expense relation
                         $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
                         break;
                     case 'investment':
@@ -302,9 +298,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
                         break;
                 }
-                $ledger= $ledger->fresh();
-                // ✅ Dispatch recalculation jobs (same as delete)
-                
+                $ledger= $ledger->fresh();                
                 RecalculateTotalsJob::dispatch(
                     \App\Models\Ledger::class,
                     'type',

@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('app_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('key')->unique();
-            $table->string('value')->nullable();
+            $table->foreignId('user_id')->nullable();
+            $table->enum('key', ['updation_period', 'deletion_period']);
+            $table->enum('value', ['1_day', '1_week', '2_weeks', '1_month', '2_months' ,'6_months','1_year']);
             $table->timestamps();
+
+            $table->unique(['user_id', 'key']);
         });
     }
 

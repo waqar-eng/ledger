@@ -18,8 +18,8 @@ class ReportService
         
         $userId = $request['user_id'] ?? null;
         $categoryId = $request['category_id'] ?? null;
-        $dateFrom = $request['from'] ?? null;
-        $dateTo   = $request['to'] ?? null;
+        $dateFrom = $request['start_date'] ?? null;
+        $dateTo   = $request['end_date'] ?? null;
         $dateFrom = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
         $dateTo   = $dateTo   ? Carbon::parse($dateTo)->endOfDay()   : null;
 

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\DeletionPeriod;
+use App\AppSettingPeriod;
 use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Customer;
@@ -67,7 +67,11 @@ class DatabaseSeeder extends Seeder
         // app settings
         AppSetting::updateOrCreate(
             ['key' => 'deletion_period'],
-            ['value' => DeletionPeriod::OneWeek->value]
+            ['value' => AppSettingPeriod::OneWeek->value]
+        );
+        AppSetting::updateOrCreate(
+            ['key' => 'updation_period'],
+            ['value' => AppSettingPeriod::OneWeek->value]
         );
     }
 }
