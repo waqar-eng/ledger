@@ -41,12 +41,29 @@ class LedgerRequest extends FormRequest
                 'required_if:ledger_type,moisture_loss,sale,purchase',
             ],
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','repayment','moisture_loss','other'])],
-                'payment_type' => ['nullable', Rule::in(['cash', 'loan', 'mix'])],
+            'payment_type' => [
+                'required_if:ledger_type,sale,purchase',
+                Rule::in(['cash', 'credit', 'partial']),
+            ],
+            'remaining_amount' => [
+                'nullable',
+                'numeric',
+                function ($attribute, $value, $fail) {
+                    $paymentType = request('payment_type');
+            
+                    if (in_array($paymentType, ['credit', 'partial']) && $value <= 0) {
+                        $fail('The '.$attribute.' must be greater than 0 for credit or partial payments.');
+                    }
+            
+                    if ($paymentType === 'cash' && !in_array($value, [null, 0, '0', '0.00'], true)) {
+                        $fail('The '.$attribute.' must be 0 or empty when payment type is cash.');
+                    }
+                },
+            ],
                 'payment_method' => ['nullable', Rule::in(['cash', 'bank'])],
-                'paid_amount' => 'nullable|numeric|min:0',
-                'remaining_amount' => 'nullable|numeric|min:0',
-                'rate' => 'nullable|numeric|min:0',
-               'quantity' => 'nullable|numeric|min:0',
+                'paid_amount' => ['required_if:ledger_type,sale,purchase','numeric','min:0'],
+                'rate' => ['required_if:ledger_type,sale,purchase','numeric'],
+                'quantity' => ['required_if:ledger_type,sale,purchase','numeric'],
                 'bill_no' => 'required|string|max:255',
         ];
         $getRules = [

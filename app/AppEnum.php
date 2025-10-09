@@ -8,6 +8,8 @@ enum AppEnum:string
 
     case Credit = 'credit';
 
+    case Partial = 'partial';
+
     case Withdraw = 'withdraw';
 
     case Opening = 'opening';
@@ -22,8 +24,14 @@ enum AppEnum:string
 
     case MoistureLoss = 'moisture_loss';
 
+    case AmountReceived = 'amount_received';
+
     case Purchase ='purchase';
 
     case Expense = 'expense';
+
+    case Paid = 'paid';
+    
+    case UnPaid = 'unpaid';
 
 }

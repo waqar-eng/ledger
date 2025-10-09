@@ -5,6 +5,7 @@ namespace App\Services;
 use App\AppEnum;
 use App\Constants\AppConstants;
 use App\Jobs\RecalculateTotalsJob;
+use App\Models\CreditSale;
 use App\Repositories\Interfaces\LedgerRepositoryInterface;
 use App\Services\Interfaces\LedgerServiceInterface;
 use App\Models\Ledger;
@@ -20,9 +21,13 @@ use Illuminate\Validation\ValidationException;
 
 class LedgerService extends BaseService implements LedgerServiceInterface
 {
-    public function __construct(LedgerRepositoryInterface $repository)
+    public function __construct(
+    LedgerRepositoryInterface $repository, 
+    private StockService $stock_service,
+    private AccountReceiveableService $account_receiveable_service,
+    )
     {
-        parent::__construct($repository);
+        parent::__construct($repository); 
     }
 
     public function findAll(array $filters)
@@ -127,8 +132,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $type = self::getLedgerType($request['ledger_type']);
 
         $newTotal = $type === AppEnum::Credit->value
-            ? $previousTotal + $request['amount']
-            : $previousTotal - $request['amount'];
+            ? $previousTotal + $request['paid_amount']
+            : $previousTotal - $request['paid_amount'];
 
         if ($newTotal < 0) {
             throw ValidationException::withMessages([
@@ -171,7 +176,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         return DB::transaction(function () use ($request) {
         //Step 1: Get the previous total amount from last valid ledger
         $amount = $request['amount'];
-        $lastQuantity = app(StockService::class)->checkStock($request);
+        $lastQuantity = $this->stock_service->checkStock($request);
         $typeAndNewtotal = self::ledgerNewTotalAndType($request);
 
         // Set derived fields in request data
@@ -183,7 +188,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         switch ($request['ledger_type']) {
             case 'sale':
                 Sale::create($request);
-                app(StockService::class)->updateStock($request, $lastQuantity);
+                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
+                    CreditSale::create($request);
+                    $this->account_receiveable_service->updateOrInsert($request);
+                }
+                $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'expense':
                 Expense::create($request);
@@ -191,11 +200,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             case 'moisture_loss':
                 $request['loss_quantity'] = $request['quantity'];
                 Expense::create($request);
-                app(StockService::class)->updateStock($request, $lastQuantity);
+                $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'purchase':
                 app(PurchaseService::class)->createWithMoisture($request);
-                app(StockService::class)->updateStock($request, $lastQuantity);
+                $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'investment':
             case 'withdraw':
@@ -252,7 +261,6 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         return DB::transaction(function () use ($request, $id) {
             $ledger = self::find($id);
             if ($ledger->ledger_type == $request['ledger_type']) {
-                $lastQuantity = app(StockService::class)->checkStock($request);
                 $request['customer_id'] = LedgerHelper::requiresCustomer($request['ledger_type'])
                     ? $ledger->customer_id
                     : null;
@@ -274,6 +282,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         // Update sale relation
                         $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
+                            $ledger->creditSale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                            $this->account_receiveable_service->updateOrInsert($request, true);
+                        }
                         // Finally, update the ledger record
                         $ledger->update($request);
                         break;
@@ -345,6 +357,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             switch ($ledger->ledger_type) {
                 case 'sale':
                     $ledger->sale?->delete();
+                    $ledger->creditSale?->delete();
+                    $this->account_receiveable_service->updateOrInsert($ledger->toArray(), true);
                     Stock::where('category_id', $ledger->category_id)
                         ->increment('total_quantity', $ledger->quantity);
                     break;

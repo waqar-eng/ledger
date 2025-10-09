@@ -3,11 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class AppSetting extends Model
 {
+    use LogsActivity;
     protected $fillable = ['key', 'value','user_id'];
     protected $hidden = ['updated_at'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->useLogName('app_settings')
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "App setting has been {$eventName}");
+    }
 
     // Helper for fetching setting
     public static function getValue(string $key, $default = null)
