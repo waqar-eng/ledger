@@ -10,13 +10,11 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {       
-        Schema::create('expenses', function (Blueprint $table) {
+    {
+        Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ledger_id')->constrained('ledgers')->onDelete('cascade');
-            $table->decimal('amount', 15, 2)->nullable();
-            $table->decimal('loss_quantity', 10, 2)->nullable();
-            $table->text('description')->nullable();
+            $table->string('categoryName');
+            $table->softDeletes();
             $table->timestamps();
         });
     }
@@ -24,11 +22,8 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-
     public function down(): void
     {
-        Schema::dropIfExists('expenses');
+        Schema::dropIfExists('categories');
     }
-    
-
 };

@@ -2,54 +2,31 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Repositories\Interfaces\CustomerRepositoryInterface;
 use App\Services\Interfaces\CustomerServiceInterface;
-use App\Models\Customer;
 
 class CustomerService extends BaseService implements CustomerServiceInterface
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct(CustomerRepositoryInterface $customerRepositoryInterface)
+    public function __construct(CustomerRepositoryInterface $CustomerRepository)
     {
-        parent::__construct( $customerRepositoryInterface);
+        parent::__construct($CustomerRepository);
     }
-
-    public function all()
-    {
-        return Customer::with('ledgers')->get();
-    }
-
-
     public function findAll(array $filters)
-{
-    $perPage = $filters['per_page'] ?? null;
-    $search = $filters['search'] ?? '';
+    {
+        $perPage = $filters['per_page'] ?? null;
+        $search = $filters['search'] ?? '';
 
-    $query = Customer::with('ledgers')
-        ->when($search, function ($query) use ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                ->orWhere('email', 'like', "%$search%")
-                ->orWhere('phone_number', 'like', "%$search%");
-            });
-        })
-        ->orderByDesc('id');
+        $query = Customer::with('transactions')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhere('email', 'like', "%$search%")
+                        ->orWhere('phone_number', 'like', "%$search%");
+                });
+            })
+            ->orderByDesc('id');
 
-    return $perPage ? $query->paginate($perPage) : $query->get();
-}
-
-     public function update(array $request, $id)
-     {
-        unset($request['email']);
-        unset($request['phone_number']);
-        $customer = parent::update($request, $id);
-        return $customer ? $customer : [];
-
+        return $perPage ? $query->paginate($perPage) : $query->get();
     }
-
 }
-
-
-

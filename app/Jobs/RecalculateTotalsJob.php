@@ -2,59 +2,48 @@
 
 namespace App\Jobs;
 
+use App\Models\Transaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Queue\Queueable as QueueQueueable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Queueable;
 use Illuminate\Queue\SerializesModels;
 
 class RecalculateTotalsJob implements ShouldQueue
 {
-    use Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, QueueQueueable, SerializesModels;
 
-    protected $model;
-    protected $typeField;
-    protected $amountField;
-    protected $id;
-    protected $extraWhere;
+    protected int $fromId;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct($model, $typeField, $amountField, $id, $extraWhere = [])
+    public function __construct(int $fromId)
     {
-        $this->model = $model;
-        $this->typeField = $typeField;
-        $this->amountField = $amountField;
-        $this->id = $id;
-        $this->extraWhere = $extraWhere;
+        $this->fromId = $fromId;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-         $query = $this->model::where('id', '>', $this->id)->orderBy('id');
-        if (!empty($this->extraWhere)) {
-            $query->where($this->extraWhere);
-        }
-        $subsequentRows = $query->get();
+   public function handle(): void
+{
+    // Get all transactions after or equal to the given ID
+    $transactions = Transaction::where('id', '>=', $this->fromId)
+        ->orderBy('id')
+        ->get();
 
-        $previousTotalQuery = $this->model::where('id', '<', $this->id);
-        if (!empty($this->extraWhere)) {
-            $previousTotalQuery->where($this->extraWhere);
-        }
-        $previousTotal = $previousTotalQuery->latest('id')->value('total_amount') ?? 0;
+    // Find the last balance before this transaction
+    $previousBalance = Transaction::where('id', '<', $this->fromId)
+        ->orderBy('id', 'desc')
+        ->value('balance') ?? 0;
 
-        foreach ($subsequentRows as $row) {
-            if ($row->{$this->typeField} === 'credit' || $row->{$this->typeField} === 'investment') {
-                $previousTotal += $row->{$this->amountField};
-            } elseif ($row->{$this->typeField} === 'debit' || $row->{$this->typeField} === 'withdraw') {
-                $previousTotal -= $row->{$this->amountField};
-            }
+    $runningBalance = $previousBalance;
 
-            $row->update(['total_amount' => $previousTotal]);
+    foreach ($transactions as $txn) {
+        if ($txn->type === 'credit') {
+            $runningBalance += $txn->amount;
+        } elseif ($txn->type === 'debit') {
+            $runningBalance -= $txn->amount;
         }
+
+        $txn->update(['balance' => $runningBalance]);
     }
+}
+
 }

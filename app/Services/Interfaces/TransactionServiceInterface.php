@@ -2,8 +2,7 @@
 
 namespace App\Services\Interfaces;
 
-interface CustomerServiceInterface extends BaseServiceInterface
+interface TransactionServiceInterface extends BaseServiceInterface
 {
     public function findAll(array $filters);
-
 }

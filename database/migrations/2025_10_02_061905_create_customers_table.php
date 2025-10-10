@@ -1,9 +1,14 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
@@ -12,12 +17,14 @@ return new class extends Migration {
             $table->string('phone_number', 20)->unique();
             $table->string('address');
             $table->string('email')->nullable()->unique();
-            $table->softDeletes(); 
+            $table->softDeletes();
             $table->timestamps();
-            
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('customers');

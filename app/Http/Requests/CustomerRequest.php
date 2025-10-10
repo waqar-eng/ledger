@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class CustomerRequest extends FormRequest
 {
@@ -13,9 +12,7 @@ class CustomerRequest extends FormRequest
         return $data;
     }
 
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+
     public function authorize(): bool
     {
         return true;
@@ -57,7 +54,7 @@ class CustomerRequest extends FormRequest
         case 'DELETE':
             return $customerId;
         case 'GET':
-
+            return  $customerId;
         default:
             return [];
      }

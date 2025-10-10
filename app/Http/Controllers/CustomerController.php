@@ -7,6 +7,7 @@ use App\Http\Requests\CustomerRequest;
 use App\Models\Customer;
 use App\Services\Interfaces\CustomerServiceInterface;
 use Exception;
+use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
@@ -18,7 +19,7 @@ class CustomerController extends Controller
         $this->customerService = $customerService;
     }
 
-    public function index(CustomerRequest $request)
+    public function index(Request $request)
     {
         try {
             $customers = $this->customerService->findAll($request->all());
@@ -38,10 +39,10 @@ class CustomerController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(CustomerRequest $request)
     {
         try {
-            $customer = $this->customerService->find($id);
+            $customer = $this->customerService->find($request->id);
             return $this->success($customer);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -49,9 +50,9 @@ class CustomerController extends Controller
     }
 
     public function update(CustomerRequest $request)
-    {  // return $request;
+    {
         try {
-            //$request = $request->validated();
+
             $customer = $this->customerService->update($request->array() , $request->id);
             return $this->success($customer, Customer::CUSTOMER_UPDATED);
         } catch (Exception $e) {
@@ -59,10 +60,10 @@ class CustomerController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(CustomerRequest $request)
     {
         try {
-            $this->customerService->delete($id);
+            $this->customerService->delete($request->id);
             return $this->success(null, Customer::CUSTOMER_DELETED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

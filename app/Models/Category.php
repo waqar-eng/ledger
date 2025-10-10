@@ -16,15 +16,18 @@ class Category extends Model
 
 
 
-public function getActivitylogOptions(): LogOptions
-{
+    public function getActivitylogOptions(): LogOptions
+    {
     return LogOptions::defaults()
         ->logAll()
         ->useLogName('category')
         ->logOnlyDirty()
         ->setDescriptionForEvent(fn(string $eventName) => "Category has been {$eventName}");
-}
-
+    }
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
     public const CATEGORY_CREATED = "Category created successfully";
     public const CATEGORY_UPDATED = "Category updated successfully";
     public const CATEGORY_DELETED = "Category deleted successfully";

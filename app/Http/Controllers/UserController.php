@@ -95,7 +95,7 @@ class UserController extends Controller
         }
     }
 
-    
+
    public function userDetails(Request $request)
    {
     try {

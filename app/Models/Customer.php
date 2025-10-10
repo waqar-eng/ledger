@@ -20,10 +20,9 @@ class Customer extends Model
         'address',
         'email',
     ];
-
-    public function ledgers()
+    public function transactions()
     {
-        return $this->hasMany(Ledger::class);
+        return $this->hasMany(Transaction::class);
     }
 
     public function getActivitylogOptions(): LogOptions
