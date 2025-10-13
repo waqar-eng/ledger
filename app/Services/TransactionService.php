@@ -36,6 +36,7 @@ public function findAll(array $filters)
         $query->where('description', 'like', '%' . $filters['search_term'] . '%');
     }
     return $this->getFilteredTransactionsWithBalance($query, $page, $perPage);
+
 }
 
 private function getFilteredTransactionsWithBalance($query, $page, $perPage)
@@ -114,4 +115,16 @@ public function delete($id)
     return $transaction;
 }
 
+public function getTransactionSummary()
+{
+    $cashIn = Transaction::where('type','credit')->sum('amount');
+    $cashOut = Transaction::where('type','debit')->sum('amount');
+
+    $remaining = $cashIn - $cashOut;
+    return [
+        'cash_in' => $cashIn,
+        'cash_out' => $cashOut,
+        'remaining' => $remaining
+    ];
+}
 }

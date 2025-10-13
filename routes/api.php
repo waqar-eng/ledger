@@ -13,6 +13,7 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:api')->group(function () {
 
+        Route::get('transactions/summary', [TransactionController::class,'getTransactionSummary']);
         Route::get('user-details',[UserController::class, 'userDetails']);
         Route::resource('users', UserController::class);
         Route::resource('/activity-logs', ActivityLogController::class);

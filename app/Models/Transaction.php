@@ -52,5 +52,7 @@ class Transaction extends Model
     public const TRANSACTIONS_FETCHED = "Transactions list fetched successfully";
     public const TRANSACTION_NOT_FOUND = "Transaction not found";
     public const TRANSACTION_ERROR = "An error occurred while processing the transaction";
-     public const LOW_BALANCE_ERROR = "inficenit balance";
+    public const LOW_BALANCE_ERROR = "inficenit balance";
+    public const TRANSACTION_SUMMARY_FETCHED = "Transaction summary fetched successfully";
+
 }

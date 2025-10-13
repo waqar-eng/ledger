@@ -47,6 +47,15 @@ class TransactionController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+    public function getTransactionSummary()
+    {
+        try {
+            $transactionSummary = $this->transactionService->getTransactionSummary();
+            return $this->success($transactionSummary, Transaction::TRANSACTION_SUMMARY_FETCHED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 
     public function update(TransactionRequest $request)
     {
