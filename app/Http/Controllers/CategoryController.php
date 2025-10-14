@@ -19,7 +19,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $categories = $this->categoryService->all($request->all());
+            $categories = $this->categoryService->findAll($request->all());
             return $this->success($categories ,Category::CATEGORYS_FETCHED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -50,7 +50,6 @@ class CategoryController extends Controller
 
     public function update(CategoryRequest $request )
     {
-       // return $request;
         try {
 
             $category = $this->categoryService->update($request->array(), $request->id);

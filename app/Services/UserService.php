@@ -26,7 +26,7 @@ class UserService extends BaseService implements UserServiceInterface
             }
         }
         else {
-           return false;
+           return null;
         }
     }
 
@@ -39,7 +39,6 @@ class UserService extends BaseService implements UserServiceInterface
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%")
                     ->orWhere('user_type', 'like', "%$search%");
                 });
@@ -65,7 +64,7 @@ class UserService extends BaseService implements UserServiceInterface
    public function update($request, $id)
    {
         unset($request['email']);
-        if(!$request['password'])
+        if($request['password'])
             unset($request['password']);
         $user = parent::update($request, $id);
         return $user ? $user : [];
