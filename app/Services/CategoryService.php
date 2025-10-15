@@ -12,8 +12,5 @@ class CategoryService extends BaseService implements CategoryServiceInterface
     {
         parent::__construct($CategoryRepository);
     }
-        public function findAll(array $filters){
-            $perPage = $filters['per_page'] ?? 10;
-            return Category::orderBy('id', 'desc')->paginate($perPage);
-        }
+
 }

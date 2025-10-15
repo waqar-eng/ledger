@@ -22,7 +22,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         try {
-            $customers = $this->customerService->findAll($request->all());
+            $customers = $this->customerService->all($request->all());
             return $this->success($customers);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

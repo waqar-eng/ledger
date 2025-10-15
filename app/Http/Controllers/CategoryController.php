@@ -19,7 +19,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $categories = $this->categoryService->findAll($request->all());
+            $categories = $this->categoryService->all($request->all());
             return $this->success($categories ,Category::CATEGORYS_FETCHED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

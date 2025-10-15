@@ -24,7 +24,7 @@ class UserController extends Controller
     public function index(UserRequest $request)
     {
         try {
-            $users = $this->userService->findAll($request->all());
+            $users = $this->userService->all($request->all());
             return $this->success($users);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
