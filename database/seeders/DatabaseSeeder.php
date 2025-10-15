@@ -29,26 +29,26 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Investor User',
                 'email' => 'user@zee.com',
                 'user_type'=> 'investor',
-                'password' => Hash::make('112233'),
+                'password' => Hash::make('investor@zee$#1'),
             ],
         ];
         User::insert($users);
 
          $cutomers = [
              [
-                'name' => 'walk-in customer',
+                'name' => 'zeeshan',
                 'email' => 'walkincustomer@gmail.com',
                 'phone_number' => '03001034567',
                 'address'=>"walkincustomer"
             ],
              [
-                'name' => 'Ali',
+                'name' => 'waqar',
                 'email' => 'ali@zee.com',
                 'phone_number' => '03001234567',
                 'address'=>"abc city"
             ],
               [
-                'name' => 'Second User',
+                'name' => 'azam',
                 'email' => 'user@zee.com',
                 'phone_number' => '03000234567',
                 'address'=>"abc city"
@@ -58,11 +58,17 @@ class DatabaseSeeder extends Seeder
         Customer::insert($cutomers);
          $category = [
             [
-                'categoryName' => 'First transaction'
+                'categoryName' => 'General'
             ],
             [
-                'categoryName' => 'Company'
+                'categoryName' => 'Ghar'
             ],
+            [
+                'categoryName' => 'Office'
+            ],
+            [
+                'categoryName' => 'Business'
+            ]
         ];
         Category::insert($category);
         // app settings
