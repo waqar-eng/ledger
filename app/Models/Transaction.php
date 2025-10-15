@@ -29,7 +29,7 @@ class Transaction extends Model
         return LogOptions::defaults()
             ->logOnly(['date', 'description', 'type', 'amount' ,'balance'])
             ->logOnlyDirty()
-            ->useLogName('')
+            ->useLogName('transaction')
             ->setDescriptionForEvent(fn(string $eventName) => "Transaction has been {$eventName}");
     }
     public function customer()

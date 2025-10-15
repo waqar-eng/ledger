@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
 use Exception;
-use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\Request;
 
@@ -24,7 +24,7 @@ class UserController extends Controller
     public function index(UserRequest $request)
     {
         try {
-            $users = $this->userService->findAll($request->all());
+            $users = $this->userService->all($request->all());
             return $this->success($users);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -80,19 +80,18 @@ class UserController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
         try {
             $token = $this->userService->loginUser($request);
             if($token) {
-                return $this->success(['token' => $token], User::LOGIN_SUCCESS);
+                return $this->success(['token' => $token], message: User::LOGIN_SUCCESS);
             }
-            else{
-                return $this->error(User::LOGIN_ERROR, 500);
-            }
+            return $this->error( User::INVALID_PASSWORD, 401);
         } catch (Exception $e) {
-            return $this->error($e->getMessage(), 500);
+            return $this->error('Something went wrong: ' .$e->getMessage(), 500);
         }
+
     }
 
 

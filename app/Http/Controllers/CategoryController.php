@@ -50,7 +50,6 @@ class CategoryController extends Controller
 
     public function update(CategoryRequest $request )
     {
-       // return $request;
         try {
 
             $category = $this->categoryService->update($request->array(), $request->id);
