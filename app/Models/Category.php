@@ -24,6 +24,10 @@ public function getActivitylogOptions(): LogOptions
         ->logOnlyDirty()
         ->setDescriptionForEvent(fn(string $eventName) => "Category has been {$eventName}");
 }
+    public function stock()
+    {
+        return $this->hasOne(Stock::class);
+    }
 
     public const CATEGORY_CREATED = "Category created successfully";
     public const CATEGORY_UPDATED = "Category updated successfully";

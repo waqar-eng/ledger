@@ -74,6 +74,10 @@ class Ledger extends Model
     {
         return $this->hasOne(CreditSale::class);
     }
+    public function creditPurchase()
+    {
+        return $this->hasOne(CreditPurchase::class);
+    }
 
 public function purchase()
 {

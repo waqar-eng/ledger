@@ -24,14 +24,16 @@ enum AppEnum:string
 
     case MoistureLoss = 'moisture_loss';
 
-    case AmountReceived = 'amount_received';
+    case Payment = 'payment';
 
     case Purchase ='purchase';
 
     case Expense = 'expense';
 
     case Paid = 'paid';
-    
+
     case UnPaid = 'unpaid';
+
+    case ReceivePayment= 'receive-payment';
 
 }

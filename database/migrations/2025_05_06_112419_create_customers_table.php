@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('phone_number', 20)->unique();
             $table->string('address');
             $table->string('email')->nullable()->unique();
+            $table->enum('type', ['buyer', 'supplier' ,'other']);
             $table->softDeletes(); 
             $table->timestamps();
             

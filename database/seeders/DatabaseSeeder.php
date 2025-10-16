@@ -25,42 +25,55 @@ class DatabaseSeeder extends Seeder
                 'email' => 'admin@zee.com',
                 'user_type'=> 'owner',
                 'password' => Hash::make('admin@zee$#1'),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
                 'name' => 'Investor User',
                 'email' => 'user@zee.com',
                 'user_type'=> 'investor',
                 'password' => Hash::make('112233'),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ];
         User::insert($users);
 
           // Categories
         $categories = [
-            ['categoryName' => 'Kapas'],
-            ['categoryName' => 'Makai'],
+            ['categoryName' => 'Kapas', 'created_at' => now(),'updated_at' => now()],
+            ['categoryName' => 'Makai', 'created_at' => now(),'updated_at' => now()],
         ];
         Category::insert($categories);
 
         // cutomers
         $cutomers = [
             [
-                'name' => 'walk-in customer',
-                'email' => 'walkincustomer@gmail.com',
+                'name' => 'Walk-in buyer',
+                'email' => 'walk-in-buyer@gmail.com',
                 'phone_number' => '03001034567',
-                'address'=>"walkincustomer"
+                'address'=>"walkinbuyer",
+                'type'=>"buyer",
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'name' => 'Ali',
-                'email' => 'ali@zee.com',
+                'name' => 'Walk-in supplier',
+                'email' => 'walk-in-supplier@gmail.com',
+                'phone_number' => '03001134567',
+                'address'=>"walkinsupplier",
+                'type'=>"supplier",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Other Customer',
+                'email' => 'other@customer.com',
                 'phone_number' => '03001234567',
-                'address'=>"abc city"
-            ],
-            [
-                'name' => 'Second User',
-                'email' => 'user@zee.com',
-                'phone_number' => '03000234567',
-                'address'=>"abc city"
+                'address'=>"other city",
+                'type'=>"other",
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ];
         Customer::insert($cutomers);
