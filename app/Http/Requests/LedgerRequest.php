@@ -22,7 +22,10 @@ class LedgerRequest extends FormRequest
     {
         $postRules = [
             'description' => 'required|string|max:255',
-             AppEnum::Amount->value => 'required',
+             AppEnum::Amount->value => [
+                'nullable',
+                'required_unless:ledger_type,purchase',
+            ],
             'date' => 'required|date',
             // Conditional validation
             'customer_id'     => [
@@ -40,13 +43,31 @@ class LedgerRequest extends FormRequest
                 'exists:categories,id',
                 'required_if:ledger_type,moisture_loss,sale,purchase',
             ],
-            'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','repayment','moisture_loss','other'])],
-                'payment_type' => ['nullable', Rule::in(['cash', 'loan', 'mix'])],
+            'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','receive-payment','payment','moisture_loss','other'])],
+            'payment_type' => [
+                'required_if:ledger_type,sale,purchase',
+                Rule::in(['cash', 'credit', 'partial']),
+            ],
+            'remaining_amount' => [
+                'nullable',
+                'numeric',
+                function ($attribute, $value, $fail) {
+                    $paymentType = request('payment_type');
+                    $ledger_type = request('ledger_type');
+            
+                    if (in_array($paymentType, ['credit', 'partial']) && $value <= 0) {
+                        $fail('The '.$attribute.' must be greater than 0 for credit or partial payments.');
+                    }
+            
+                    if ($paymentType === 'cash' && $ledger_type!=='receive-payment' && $ledger_type!=='payment' && !in_array($value, [null, 0, '0', '0.00'], true)) {
+                        $fail('The '.$attribute.' must be 0 or empty when payment type is cash.');
+                    }
+                },
+            ],
                 'payment_method' => ['nullable', Rule::in(['cash', 'bank'])],
                 'paid_amount' => 'nullable|numeric|min:0',
-                'remaining_amount' => 'nullable|numeric|min:0',
                 'rate' => 'nullable|numeric|min:0',
-               'quantity' => 'nullable|numeric|min:0',
+                'quantity' => 'nullable|numeric|min:0',
                 'bill_no' => 'required|string|max:255',
         ];
         $getRules = [

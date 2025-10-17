@@ -5,6 +5,10 @@ namespace App\Services;
 use App\AppEnum;
 use App\Constants\AppConstants;
 use App\Jobs\RecalculateTotalsJob;
+use App\Models\AccountPayable;
+use App\Models\AccountReceivable;
+use App\Models\CreditPurchase;
+use App\Models\CreditSale;
 use App\Repositories\Interfaces\LedgerRepositoryInterface;
 use App\Services\Interfaces\LedgerServiceInterface;
 use App\Models\Ledger;
@@ -20,9 +24,14 @@ use Illuminate\Validation\ValidationException;
 
 class LedgerService extends BaseService implements LedgerServiceInterface
 {
-    public function __construct(LedgerRepositoryInterface $repository)
+    public function __construct(
+    LedgerRepositoryInterface $repository, 
+    private StockService $stock_service,
+    private AccountReceiveableService $account_receiveable_service,
+    private AccountPayableService $account_payable_service,
+    )
     {
-        parent::__construct($repository);
+        parent::__construct($repository); 
     }
 
     public function findAll(array $filters)
@@ -64,6 +73,28 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             ->when(!empty($filters['type']), fn($q) => $q->where('type', $filters['type']))
             ->when(!empty($filters['ledger_type']), fn($q) => $q->where('ledger_type', $filters['ledger_type']))
             ->when(!empty($filters['category_id']), fn($q) => $q->where('category_id', $filters['category_id']))
+            ->when(!empty($filters['is_credit_sale']), function ($q) {
+                $q->where(function ($query) {
+                    $query->where(function ($sub) {
+                        $sub->where('ledger_type', 'sale')
+                            ->where('payment_type', AppEnum::Credit);
+                    })
+                    ->orWhere(function ($sub) {
+                        $sub->where('ledger_type', 'receive-payment');
+                    });
+                });
+            })
+            ->when(!empty($filters['is_credit_purchase']), function ($q) {
+                $q->where(function ($query) {
+                    $query->where(function ($sub) {
+                        $sub->where('ledger_type', 'purchase')
+                            ->where('payment_type', AppEnum::Credit);
+                    })
+                    ->orWhere(function ($sub) {
+                        $sub->where('ledger_type', 'payment');
+                    });
+                });
+            })
             ->orderByDesc('id');
     }
 
@@ -74,41 +105,87 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function calculateTotals($data, $filters)
     {
-        $sale = $data->where('ledger_type', AppEnum::Sale)->sum('amount') ?? 0;
-        $purchase = $data->where('ledger_type', AppEnum::Purchase)->sum('amount') ?? 0;
-        $expense = $data->where('ledger_type', AppEnum::Expense)->sum('amount') ?? 0;
-        $investment = $data->where('ledger_type', AppEnum::Investment)->sum('amount') ?? 0;
-        $withdrawal = $data->where('ledger_type', AppEnum::Withdraw)->sum('amount') ?? 0;
+        // Helper flags
+        $isCreditPurchase = !empty($filters['is_credit_purchase']);
+        $isCreditSale     = !empty($filters['is_credit_sale']);
+        $hasCustomer      = !empty($filters['customer_id']);
+        $hasCategory      = !empty($filters['category_id']);
+
+        $totals = [
+            'sale'       => $data->where('ledger_type', AppEnum::Sale)->sum('amount') ?? 0,
+            'purchase'   => $data->where('ledger_type', AppEnum::Purchase)->sum('amount') ?? 0,
+            'expense'    => $data->where('ledger_type', AppEnum::Expense)->sum('amount') ?? 0,
+            'investment' => $data->where('ledger_type', AppEnum::Investment)->sum('amount') ?? 0,
+            'withdrawal' => $data->where('ledger_type', AppEnum::Withdraw)->sum('amount') ?? 0,
+            'payment'    => $isCreditPurchase ? $data->where('ledger_type', AppEnum::Payment)->sum('paid_amount') : 0,
+            'receive_payment' => $isCreditSale ? $data->where('ledger_type', AppEnum::ReceivePayment)->sum('paid_amount') : 0,
+        ];
+
         $total_amount = optional($data->first())->total_amount ?? 0;
-        // Net total for the user (if user_id provided)
+        $total_paid     = $totals['payment'] ?? 0;
+        $total_received = $totals['receive_payment'] ?? 0;
+
+        // 1️⃣ User specific total
         if (!empty($filters['user_id'])) {
-            $total_amount = $investment - $withdrawal;
-        } elseif (!empty($filters['ledger_type']) && $filters['ledger_type'] == 'withdraw') {
-            $total_amount = $withdrawal;
-        } elseif (!empty($filters['ledger_type']) && $filters['ledger_type'] == 'investment') {
-            $total_amount = $investment;
-        } elseif (!empty($filters['category_id'])) {
-            $total_amount = ($sale + $investment) - ($purchase + $expense + $withdrawal);
-            if (!empty($filters['customer_id'])) {
-                $total_amount = ($purchase && $sale) ? ($purchase - $sale) : ($purchase ? $purchase : $sale);
+            $total_amount = $totals['investment'] - $totals['withdrawal'];
+        }
+
+        // 2️⃣ Specific ledger type totals
+        elseif (!empty($filters['ledger_type'])) {
+            $type = $filters['ledger_type'];
+            if (in_array($type, ['withdraw', 'investment']) && isset($totals[$type])) {
+                $total_amount = $totals[$type];
             }
         }
 
-        return [
-            'sale'        => $sale,
-            'purchase'    => $purchase,
-            'expense'     => $expense,
-            'investment'  => $investment,
-            'withdrawal'  => $withdrawal,
-            'total_amount'   => $total_amount,
-        ];
+        // 3️⃣ Category & Customer totals (Accounts Payable/Receivable)
+        elseif ($hasCategory) {
+            $query = $isCreditPurchase ? AccountPayable::query() : AccountReceivable::query();
+            $query->where('category_id', $filters['category_id']);
+
+            if ($hasCustomer) {
+                $query->where('customer_id', $filters['customer_id']);
+            }
+
+            $total_amount = $query->sum('balance');
+            if($isCreditPurchase)
+            $total_paid = $data->sum('paid_amount');
+            if($isCreditSale)
+            $total_received = $data->sum('paid_amount');
+        }
+
+        // 4️⃣ Customer totals only
+        elseif ($hasCustomer) {
+            $query = $isCreditPurchase ? AccountPayable::query() : AccountReceivable::query();
+            $total_amount = $query->where('customer_id', $filters['customer_id'])->sum('balance');
+            if($isCreditPurchase)
+            $total_paid = $data->sum('paid_amount');
+            if($isCreditSale)
+            $total_received = $data->sum('paid_amount');
+        }
+
+        // 5️⃣ All Payable or Receivable totals
+        elseif ($isCreditPurchase) {
+            $total_amount = AccountPayable::sum('balance');
+            $total_paid = $data->sum('paid_amount');
+        } elseif ($isCreditSale) {
+            $total_amount = AccountReceivable::sum('balance');
+            $total_received = $data->sum('paid_amount');
+        }
+
+        return array_merge($totals, [
+            'total_amount' => $total_amount,
+            'total_received' => $total_received,
+            'total_paid' => $total_paid,
+        ]);
     }
+
 
     public static function getLedgerType($ledger_type)
     {
         return match ($ledger_type) {
-            'purchase', 'expense', 'withdraw', 'repayment', 'moisture_loss', 'other' => AppEnum::Debit->value,
-            'sale', 'investment' => AppEnum::Credit->value,
+            'purchase', 'expense', 'withdraw', 'moisture_loss', 'other','payment' => AppEnum::Debit->value,
+            'sale', 'investment','receive-payment' => AppEnum::Credit->value,
 
             default => throw ValidationException::withMessages([
                 'ledger_type' => ['Invalid ledger type.']
@@ -124,11 +201,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
         $latestLedger = $query->latest()->first();
         $previousTotal = $latestLedger?->total_amount ?? 0;
-        $type = self::getLedgerType($request['ledger_type']);
+        $ledgerType = $request['ledger_type'];
+        $type = self::getLedgerType($ledgerType);
+
+        $newAmount = ($ledgerType == AppEnum::Investment->value) ? $request['amount'] : $request['paid_amount'];
 
         $newTotal = $type === AppEnum::Credit->value
-            ? $previousTotal + $request['amount']
-            : $previousTotal - $request['amount'];
+            ? $previousTotal + $newAmount
+            : $previousTotal - $newAmount;
 
         if ($newTotal < 0) {
             throw ValidationException::withMessages([
@@ -170,20 +250,29 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         return DB::transaction(function () use ($request) {
         //Step 1: Get the previous total amount from last valid ledger
-        $amount = $request['amount'];
-        $lastQuantity = app(StockService::class)->checkStock($request);
+        $amount = $request['amount'] ?? 0;
+        $lastQuantity = $this->stock_service->checkStock($request);
         $typeAndNewtotal = self::ledgerNewTotalAndType($request);
 
         // Set derived fields in request data
         $request['type'] = $typeAndNewtotal['type'];
         $request['total_amount'] = $typeAndNewtotal['newTotal'];
+        if(!$amount){
+            $request['rate'] = null;
+            $request['paid_amount'] = null;
+            $request['remaining_amount'] = null;
+        }
         $ledger = Ledger::create($request);
         $request['ledger_id'] = $ledger->id;
 
         switch ($request['ledger_type']) {
             case 'sale':
                 Sale::create($request);
-                app(StockService::class)->updateStock($request, $lastQuantity);
+                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
+                    CreditSale::create($request);
+                    $this->account_receiveable_service->updateOrInsert($request);
+                }
+                $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'expense':
                 Expense::create($request);
@@ -191,11 +280,21 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             case 'moisture_loss':
                 $request['loss_quantity'] = $request['quantity'];
                 Expense::create($request);
-                app(StockService::class)->updateStock($request, $lastQuantity);
+                $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'purchase':
                 app(PurchaseService::class)->createWithMoisture($request);
-                app(StockService::class)->updateStock($request, $lastQuantity);
+                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $amount>0) {
+                    CreditPurchase::create($request);
+                    $this->account_payable_service->updateOrInsert($request);
+                }
+                $this->stock_service->updateStock($request, $lastQuantity);
+                break;
+            case 'receive-payment':
+                $this->account_receiveable_service->reduce($request);
+                break;
+            case 'payment':
+                $this->account_payable_service->reduce($request);
                 break;
             case 'investment':
             case 'withdraw':
@@ -252,7 +351,6 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         return DB::transaction(function () use ($request, $id) {
             $ledger = self::find($id);
             if ($ledger->ledger_type == $request['ledger_type']) {
-                $lastQuantity = app(StockService::class)->checkStock($request);
                 $request['customer_id'] = LedgerHelper::requiresCustomer($request['ledger_type'])
                     ? $ledger->customer_id
                     : null;
@@ -264,7 +362,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
                 $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
                 // Update ledger itself
-                if($request['ledger_type']!=='moisture_loss' && $request['ledger_type']!=='purchase' && $request['ledger_type']!=='sale')
+                if($request['ledger_type']!=='moisture_loss' && $request['ledger_type']!=='purchase' && $request['ledger_type']!=='sale' && $request['ledger_type']!=='receive-payment' && $request['ledger_type']!=='payment')
                 $ledger->update($request);
                 $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
 
@@ -274,12 +372,20 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         // Update sale relation
                         $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
+                            $ledger->creditSale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                            $this->account_receiveable_service->updateOrInsert($request, true);
+                        }
                         // Finally, update the ledger record
                         $ledger->update($request);
                         break;
                     case 'purchase':
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $request['amount']>0) {
+                            $ledger->creditPurchase()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                            $this->account_payable_service->updateOrInsert($request, true);
+                        }
                         $ledger->update($request);
                         break;
                     case 'expense':
@@ -290,6 +396,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         $ledger->update($request);
                         $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                    case 'receive-payment':
+                        $this->handlePaymentUpdate($ledger, $request, 'receivable');
+                        break;
+
+                    case 'payment':
+                        $this->handlePaymentUpdate($ledger, $request, 'payable');
                         break;
                     case 'investment':
                     case 'withdraw':
@@ -317,11 +430,47 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                                 $newInvestment
                             );
                     }
-
-                
             }
             return $ledger;
         });
+    }
+    private function handlePaymentUpdate(
+    Ledger $ledger,
+    array $request,
+    string $serviceType // 'receivable' or 'payable'
+    ): void {
+        $oldPaidAmount = $ledger->paid_amount ?? 0;
+        $newPaidAmount = $request['paid_amount'] ?? 0;
+        $difference = $newPaidAmount - $oldPaidAmount;
+
+        // Update ledger first
+        $ledger->update($request);
+
+        // Resolve target service dynamically
+        $service = $serviceType === 'receivable'
+            ? $this->account_receiveable_service
+            : $this->account_payable_service;
+
+        // Apply logic only if there’s a difference
+        if ($difference === 0) {
+            return;
+        }
+
+        if ($difference > 0) {
+            // Extra payment — reduce receivable/payable
+            $service->reduce([
+                'customer_id' => $request['customer_id'],
+                'category_id' => $request['category_id'],
+                'paid_amount' => $difference,
+            ]);
+        } else {
+            // Payment decreased — restore back
+            $service->restore(
+                $request['customer_id'],
+                abs($difference),
+                $request['category_id']
+            );
+        }
     }
     public function billNumber()
     {
@@ -345,12 +494,16 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             switch ($ledger->ledger_type) {
                 case 'sale':
                     $ledger->sale?->delete();
+                    $ledger->creditSale?->delete();
+                    $this->account_receiveable_service->updateOrInsert($ledger->toArray(), true);
                     Stock::where('category_id', $ledger->category_id)
                         ->increment('total_quantity', $ledger->quantity);
                     break;
 
                 case 'purchase':
                     $ledger->purchase?->delete();
+                    $ledger->creditPurchase?->delete();
+                    $this->account_payable_service->updateOrInsert($ledger->toArray(), true);
                     Stock::where('category_id', $ledger->category_id)
                         ->decrement('total_quantity', $ledger->quantity);
                     break;
@@ -366,7 +519,27 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 case 'expense':
                     $ledger->expense?->delete();
                     break;
+                case 'receive-payment':
+                    // 🧾 Reverse the receive-payment impact
+                    $customerId = $ledger->customer_id;
+                    $paidAmount = $ledger->paid_amount ?? 0;
+                    $categoryId = $ledger->category_id;
+    
+                    if ($paidAmount > 0 && $customerId && $categoryId) {
+                        // Call restore() to return this amount to credit sales
+                        $this->account_receiveable_service->restore($customerId, $paidAmount, $categoryId);
+                    }
+                    break;
+                case 'payment':
+                    $customerId = $ledger->customer_id;
+                    $paidAmount = $ledger->paid_amount ?? 0;
+                    $categoryId = $ledger->category_id;
 
+                    if ($paidAmount > 0 && $customerId && $categoryId) {
+                        // Supplier payment deleted → restore payable balance
+                        $this->account_payable_service->restore($customerId, $paidAmount, $categoryId);
+                    }    
+                    break;
                 case 'investment':
                 case 'withdraw':
                     $invId = $ledger->investment?->id;

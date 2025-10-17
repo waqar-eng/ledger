@@ -27,11 +27,12 @@ class CustomerService extends BaseService implements CustomerServiceInterface
     $perPage = $filters['per_page'] ?? null;
     $search = $filters['search'] ?? '';
 
-    $query = Customer::with('ledgers')
+    $query = Customer::with(['ledgers', 'accountReceivables', 'accountPayables'])
         ->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                 ->orWhere('email', 'like', "%$search%")
+                ->orWhere('type', 'like', "%$search%")
                 ->orWhere('phone_number', 'like', "%$search%");
             });
         })
@@ -44,6 +45,7 @@ class CustomerService extends BaseService implements CustomerServiceInterface
      {
         unset($request['email']);
         unset($request['phone_number']);
+        unset($request['type']);
         $customer = parent::update($request, $id);
         return $customer ? $customer : [];
 
