@@ -17,7 +17,6 @@ use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\Expense;
 use App\Models\Investment;
-use App\Models\Purchase;
 use App\Models\Stock;
 use App\Services\Helpers\LedgerHelper;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +29,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     private StockService $stock_service,
     private AccountReceiveableService $account_receiveable_service,
     private AccountPayableService $account_payable_service,
+    private ReportService $report_service,
+    private PurchaseService $purchase_service,
     )
     {
         parent::__construct($repository); 
@@ -338,7 +339,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     public function report($request)
     {
-        return app(ReportService::class)->generateReport($request);
+        $this->report_service->generateReport($request);
     }
 
     public function delete($id)
@@ -384,7 +385,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'purchase':
-                app(PurchaseService::class)->createWithMoisture($request);
+                $this->purchase_service->createWithMoisture($request);
                 if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $amount>0) {
                     CreditPurchase::create($request);
                     $this->account_payable_service->updateOrInsert($request);
@@ -444,7 +445,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         break;
                     case 'purchase':
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
-                        app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
+                        $this->purchase_service->updateWithMoisture($ledger->id, $request);
                         if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $request['amount']>0) {
                             $ledger->creditPurchase()->updateOrCreate(['ledger_id' => $ledger->id], $request);
                             $this->account_payable_service->updateOrInsert($request, true);
