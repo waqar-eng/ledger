@@ -3,8 +3,12 @@
 namespace App\Http\Requests;
 
 use App\AppEnum;
+use App\Models\Ledger;
+use App\Services\LedgerService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
 class LedgerRequest extends FormRequest
 {
      public function all($keys = null){
@@ -28,16 +32,27 @@ class LedgerRequest extends FormRequest
             ],
             'date' => 'required|date',
             // Conditional validation
-            'customer_id'     => [
+            'customer_id' => [
                 'nullable',
                 'exists:customers,id',
                 'required_unless:ledger_type,withdraw,investment,expense,moisture_loss',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->user_id) {
+                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
+                    }
+                },
             ],
-            'user_id'         => [
+            'user_id' => [
                 'nullable',
                 'exists:users,id',
                 'required_if:ledger_type,withdraw,investment',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->customer_id) {
+                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
+                    }
+                },
             ],
+
             'category_id'         => [
                 'nullable',
                 'exists:categories,id',
@@ -45,8 +60,8 @@ class LedgerRequest extends FormRequest
             ],
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','receive-payment','payment','moisture_loss','other'])],
             'payment_type' => [
-                'required_if:ledger_type,sale,purchase',
-                Rule::in(['cash', 'credit', 'partial']),
+                'required_if:ledger_type,sale,purchase,payment, receive-payment',
+                Rule::in(['cash', 'credit', 'partial', null]),
             ],
             'remaining_amount' => [
                 'nullable',
@@ -91,6 +106,20 @@ class LedgerRequest extends FormRequest
                 return $idRule;
             default:
                 return $getRules;
+        }
+    }
+    protected function passedValidation()
+    {
+        // Only run on create or update
+        if (!in_array($this->method(), ['POST', 'PUT', 'PATCH'])) {
+            return;
+        }
+
+        try {
+            LedgerService::ledgerNewTotalAndType($this->all(), $this->id);
+        } catch (ValidationException $e) {
+            // rethrow to stop validation and send proper error response
+            throw $e;
         }
     }
 }

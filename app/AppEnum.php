@@ -10,6 +10,8 @@ enum AppEnum:string
 
     case Partial = 'partial';
 
+    case Cash = 'cash';
+
     case Withdraw = 'withdraw';
 
     case Opening = 'opening';

@@ -10,30 +10,89 @@ use Illuminate\Support\Facades\Log;
 
 class AccountReceiveableService
 {
-    public function updateOrInsert(array $request, bool $isUpdate = false): void
-    {
-        DB::transaction(function () use ($request, $isUpdate) {
+public function updateOrInsert(array $request, bool $isUpdate = false, ?int $oldCustomerId = null): void
+{
+    DB::transaction(function () use ($request, $isUpdate, $oldCustomerId) {
+        if (! $isUpdate) {
+            // CREATE
             $record = AccountReceivable::firstOrNew([
                 'customer_id' => $request['customer_id'],
                 'category_id' => $request['category_id'],
             ]);
 
-            if (! $isUpdate) {
-                // Creation time — just add the current amount
-                $record->balance = ($record->balance ?? 0) + $request['remaining_amount'];
-            } else {
-                // Update time — recalc full sum of all related credit sales
-                $totalCreditSales = CreditSale::where('customer_id', $request['customer_id'])
-                    ->where('category_id', $request['category_id'])
-                    ->where('status', AppEnum::UnPaid)
-                    ->sum('remaining_amount');
+            $record->balance = ($record->balance ?? 0) + ($request['remaining_amount'] ?? 0);
+            $record->save();
+            return;
+        }
 
-                $record->balance = $totalCreditSales;
+        // UPDATE
+        if ($oldCustomerId && $oldCustomerId !== $request['customer_id']) {
+            // Handle customer change
+            // --- new customer ---
+            $newRecord = AccountReceivable::firstOrNew([
+                'customer_id' => $request['customer_id'],
+                'category_id' => $request['category_id'],
+            ]);
+            $newRecord->balance = ($newRecord->balance ?? 0) + ($request['remaining_amount'] ?? 0);
+            $newRecord->save();
+
+            // --- old customer ---
+            $oldTotal = CreditSale::where('customer_id', $oldCustomerId)
+                ->where('category_id', $request['category_id'])
+                ->where('status', AppEnum::UnPaid)
+                ->sum('remaining_amount');
+
+            if ($oldTotal > 0) {
+                AccountReceivable::updateOrCreate(
+                    ['customer_id' => $oldCustomerId, 'category_id' => $request['category_id']],
+                    ['balance' => $oldTotal]
+                );
+            } else {
+                AccountReceivable::where('customer_id', $oldCustomerId)
+                    ->where('category_id', $request['category_id'])
+                    ->delete();
             }
 
-            $record->save();
-        });
-    }
+            return;
+        }
+
+        // Same customer update — recalc balance
+        $totalCreditSales = CreditSale::where('customer_id', $request['customer_id'])
+            ->where('category_id', $request['category_id'])
+            ->where('status', AppEnum::UnPaid)
+            ->sum('remaining_amount');
+
+        AccountReceivable::updateOrCreate(
+            ['customer_id' => $request['customer_id'], 'category_id' => $request['category_id']],
+            ['balance' => $totalCreditSales]
+        );
+    });
+}
+
+    // public function updateOrInsert(array $request, bool $isUpdate = false): void
+    // {
+    //     DB::transaction(function () use ($request, $isUpdate) {
+    //         $record = AccountReceivable::firstOrNew([
+    //             'customer_id' => $request['customer_id'],
+    //             'category_id' => $request['category_id'],
+    //         ]);
+
+    //         if (! $isUpdate) {
+    //             // Creation time — just add the current amount
+    //             $record->balance = ($record->balance ?? 0) + $request['remaining_amount'];
+    //         } else {
+    //             // Update time — recalc full sum of all related credit sales
+    //             $totalCreditSales = CreditSale::where('customer_id', $request['customer_id'])
+    //                 ->where('category_id', $request['category_id'])
+    //                 ->where('status', AppEnum::UnPaid)
+    //                 ->sum('remaining_amount');
+
+    //             $record->balance = $totalCreditSales;
+    //         }
+
+    //         $record->save();
+    //     });
+    // }
 
     public function reduce(array $request): void
     {

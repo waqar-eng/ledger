@@ -59,7 +59,7 @@ class Ledger extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['description', 'amount', 'type', 'date', 'customer_id'])
+            ->logAll()
             ->logOnlyDirty()
             ->useLogName('ledger')
             ->setDescriptionForEvent(fn(string $eventName) => "Ledger entry has been {$eventName}");
@@ -104,4 +104,5 @@ public const BILL_NUMBER_SUCCESS= "Bill number created successfully";
 public const REPORT_SUCCESS= "Reports fetched successfully";
 public const LEDGER_DELETION_ERROR= "You can only delete record created within the allowed period.";
 public const LEDGER_UPDATION_ERROR= "You can only update record created within the allowed period.";
+public const USER_AND_CUSTOMER_ERROR= "Customer & user not allowed at the same time, refresh the page.";
 }

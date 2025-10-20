@@ -27,4 +27,15 @@ class LedgerHelper
             default => null,
         };
     }
+    public static function resolvePaymentType(array $request): string
+    {
+        $r = (float)($request['remaining_amount'] ?? 0);
+        $p = (float)($request['paid_amount'] ?? 0);
+
+        return ($r > 0 && $p > 0)
+            ? AppEnum::Partial->value
+            : ($r > 0
+                ? AppEnum::Credit->value
+                : AppEnum::Cash->value);
+    }
 }
