@@ -68,32 +68,6 @@ public function updateOrInsert(array $request, bool $isUpdate = false, ?int $old
         );
     });
 }
-
-    // public function updateOrInsert(array $request, bool $isUpdate = false): void
-    // {
-    //     DB::transaction(function () use ($request, $isUpdate) {
-    //         $record = AccountReceivable::firstOrNew([
-    //             'customer_id' => $request['customer_id'],
-    //             'category_id' => $request['category_id'],
-    //         ]);
-
-    //         if (! $isUpdate) {
-    //             // Creation time — just add the current amount
-    //             $record->balance = ($record->balance ?? 0) + $request['remaining_amount'];
-    //         } else {
-    //             // Update time — recalc full sum of all related credit sales
-    //             $totalCreditSales = CreditSale::where('customer_id', $request['customer_id'])
-    //                 ->where('category_id', $request['category_id'])
-    //                 ->where('status', AppEnum::UnPaid)
-    //                 ->sum('remaining_amount');
-
-    //             $record->balance = $totalCreditSales;
-    //         }
-
-    //         $record->save();
-    //     });
-    // }
-
     public function reduce(array $request): void
     {
         $customerId = $request['customer_id'];
