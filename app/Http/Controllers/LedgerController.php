@@ -65,10 +65,7 @@ class LedgerController extends Controller
         try {
             $this->authorizeModelAction('update', Ledger::class, $id);
             $ledger = $this->ledgerService->update($request->all(), $id);
-
-            return $ledger
-                ? $this->success($ledger, Ledger::LEDGER_UPDATED)
-                : $this->error(Ledger::LEDGER_TYPE_RESTRICTED, 500);
+            $this->success($ledger, Ledger::LEDGER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -79,9 +76,7 @@ class LedgerController extends Controller
         try {
             $this->authorizeModelAction('delete', Ledger::class, $request->id);
             $res=$this->ledgerService->delete($request->id);
-            if($res)
             return $this->success($res, Ledger::LEDGER_DELETED);
-            return $this->error($res);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

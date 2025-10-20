@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\AppEnum;
 use App\Constants\AppConstants;
+use App\Jobs\ProcessLedgerJob;
 use App\Jobs\RecalculateTotalsJob;
 use App\Models\AccountPayable;
 use App\Models\AccountReceivable;
@@ -16,7 +17,6 @@ use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\Expense;
 use App\Models\Investment;
-use App\Models\Purchase;
 use App\Models\Stock;
 use App\Services\Helpers\LedgerHelper;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +29,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     private StockService $stock_service,
     private AccountReceiveableService $account_receiveable_service,
     private AccountPayableService $account_payable_service,
+    private ReportService $report_service,
+    private PurchaseService $purchase_service,
     )
     {
         parent::__construct($repository); 
@@ -77,7 +79,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $q->where(function ($query) {
                     $query->where(function ($sub) {
                         $sub->where('ledger_type', 'sale')
-                            ->where('payment_type', AppEnum::Credit);
+                            ->whereIn('payment_type', [AppEnum::Credit, AppEnum::Partial]);
                     })
                     ->orWhere(function ($sub) {
                         $sub->where('ledger_type', 'receive-payment');
@@ -88,7 +90,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $q->where(function ($query) {
                     $query->where(function ($sub) {
                         $sub->where('ledger_type', 'purchase')
-                            ->where('payment_type', AppEnum::Credit);
+                            ->whereIn('payment_type', [AppEnum::Credit, AppEnum::Partial]);
                     })
                     ->orWhere(function ($sub) {
                         $sub->where('ledger_type', 'payment');
@@ -204,7 +206,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $ledgerType = $request['ledger_type'];
         $type = self::getLedgerType($ledgerType);
 
-        $newAmount = ($ledgerType == AppEnum::Investment->value) ? $request['amount'] : $request['paid_amount'];
+        $newAmount = ($ledgerType == AppEnum::Investment->value 
+        || $ledgerType == AppEnum::Expense->value 
+        || $ledgerType == AppEnum::Withdraw->value) 
+        ? $request['amount'] : $request['paid_amount'];
 
         $newTotal = $type === AppEnum::Credit->value
             ? $previousTotal + $newAmount
@@ -248,69 +253,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     public function create($request)
     {
-        return DB::transaction(function () use ($request) {
-        //Step 1: Get the previous total amount from last valid ledger
-        $amount = $request['amount'] ?? 0;
-        $lastQuantity = $this->stock_service->checkStock($request);
-        $typeAndNewtotal = self::ledgerNewTotalAndType($request);
-
-        // Set derived fields in request data
-        $request['type'] = $typeAndNewtotal['type'];
-        $request['total_amount'] = $typeAndNewtotal['newTotal'];
-        if(!$amount){
-            $request['rate'] = null;
-            $request['paid_amount'] = null;
-            $request['remaining_amount'] = null;
-        }
-        $ledger = Ledger::create($request);
-        $request['ledger_id'] = $ledger->id;
-
-        switch ($request['ledger_type']) {
-            case 'sale':
-                Sale::create($request);
-                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
-                    CreditSale::create($request);
-                    $this->account_receiveable_service->updateOrInsert($request);
-                }
-                $this->stock_service->updateStock($request, $lastQuantity);
-                break;
-            case 'expense':
-                Expense::create($request);
-                break;
-            case 'moisture_loss':
-                $request['loss_quantity'] = $request['quantity'];
-                Expense::create($request);
-                $this->stock_service->updateStock($request, $lastQuantity);
-                break;
-            case 'purchase':
-                app(PurchaseService::class)->createWithMoisture($request);
-                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $amount>0) {
-                    CreditPurchase::create($request);
-                    $this->account_payable_service->updateOrInsert($request);
-                }
-                $this->stock_service->updateStock($request, $lastQuantity);
-                break;
-            case 'receive-payment':
-                $this->account_receiveable_service->reduce($request);
-                break;
-            case 'payment':
-                $this->account_payable_service->reduce($request);
-                break;
-            case 'investment':
-            case 'withdraw':
-                $newInvestment = self::investmentNewTotal($request);
-                Investment::create([
-                    'ledger_id' => $ledger->id,
-                    'user_id'      => $request['user_id'],
-                    'type'         => $request['ledger_type'] ?? 'investment',
-                    'amount'       => $amount,
-                    'total_amount' =>  $newInvestment,
-                    'date'         => $request['date'],
-                ]);
-                break;
-        }
-        return $ledger;
-    });
+        ProcessLedgerJob::dispatch('create', null, $request);
     }
 
     public function getDashboardSummary(): array
@@ -348,91 +291,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public function update($request, $id)
     {
-        return DB::transaction(function () use ($request, $id) {
-            $ledger = self::find($id);
-            if ($ledger->ledger_type == $request['ledger_type']) {
-                $request['customer_id'] = LedgerHelper::requiresCustomer($request['ledger_type'])
-                    ? $ledger->customer_id
-                    : null;
-
-                $request['user_id'] = LedgerHelper::requiresCustomer($request['ledger_type'])
-                    ? null
-                    : $ledger->user_id;
-                $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
-                $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
-                $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
-                // Update ledger itself
-                if($request['ledger_type']!=='moisture_loss' && $request['ledger_type']!=='purchase' && $request['ledger_type']!=='sale' && $request['ledger_type']!=='receive-payment' && $request['ledger_type']!=='payment')
-                $ledger->update($request);
-                $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
-
-                // Update relation based on ledger_type
-                switch ($request['ledger_type']) {
-                    case 'sale':
-                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
-                        // Update sale relation
-                        $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
-                            $ledger->creditSale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                            $this->account_receiveable_service->updateOrInsert($request, true);
-                        }
-                        // Finally, update the ledger record
-                        $ledger->update($request);
-                        break;
-                    case 'purchase':
-                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
-                        app(PurchaseService::class)->updateWithMoisture($ledger->id, $request);
-                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $request['amount']>0) {
-                            $ledger->creditPurchase()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                            $this->account_payable_service->updateOrInsert($request, true);
-                        }
-                        $ledger->update($request);
-                        break;
-                    case 'expense':
-                        $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                        break;
-                    case 'moisture_loss':
-                        $request['loss_quantity'] = $request['quantity'];
-                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
-                        $ledger->update($request);
-                        $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                        break;
-                    case 'receive-payment':
-                        $this->handlePaymentUpdate($ledger, $request, 'receivable');
-                        break;
-
-                    case 'payment':
-                        $this->handlePaymentUpdate($ledger, $request, 'payable');
-                        break;
-                    case 'investment':
-                    case 'withdraw':
-                        $request['total_amount'] = $newInvestment;
-                        $request['type']         = $request['ledger_type'];
-                        Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
-                        break;
-                }
-                $ledger= $ledger->fresh();                
-                RecalculateTotalsJob::dispatch(
-                    \App\Models\Ledger::class,
-                    'type',
-                    'amount',
-                    $ledger->id,
-                    [],
-                    $ledger->total_amount
-                );
-                if (in_array($ledger->ledger_type, ['investment', 'withdraw'])) {
-                            RecalculateTotalsJob::dispatch(
-                                \App\Models\Investment::class,
-                                'type',
-                                'amount',
-                                $ledger->investment?->id ?? 0,
-                                ['user_id' => $ledger->user_id],
-                                $newInvestment
-                            );
-                    }
-            }
-            return $ledger;
-        });
+        ProcessLedgerJob::dispatch('update', $id, $request);
     }
     private function handlePaymentUpdate(
     Ledger $ledger,
@@ -480,10 +339,165 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     public function report($request)
     {
-        return app(ReportService::class)->generateReport($request);
+        $this->report_service->generateReport($request);
     }
 
     public function delete($id)
+    {
+        ProcessLedgerJob::dispatch('delete', $id);
+    }
+
+    // handlers
+    public function handleCreate(array $request)
+    {
+        return DB::transaction(function () use ($request) {
+        //Step 1: Get the previous total amount from last valid ledger
+        $amount = $request['amount'] ?? 0;
+        $lastQuantity = $this->stock_service->checkStock($request);
+        $typeAndNewtotal = self::ledgerNewTotalAndType($request);
+        $request['payment_type'] = LedgerHelper::resolvePaymentType($request);
+        // Set derived fields in request data
+        $request['type'] = $typeAndNewtotal['type'];
+        $request['total_amount'] = $typeAndNewtotal['newTotal'];
+        if(!$amount){
+            $request['rate'] = null;
+            $request['paid_amount'] = null;
+            $request['remaining_amount'] = null;
+        }
+        $ledger = Ledger::create($request);
+        $request['ledger_id'] = $ledger->id;
+
+        switch ($request['ledger_type']) {
+            case 'sale':
+                Sale::create($request);
+                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
+                    CreditSale::create($request);
+                    $this->account_receiveable_service->updateOrInsert($request);
+                }
+                $this->stock_service->updateStock($request, $lastQuantity);
+                break;
+            case 'expense':
+                Expense::create($request);
+                break;
+            case 'moisture_loss':
+                $request['loss_quantity'] = $request['quantity'];
+                Expense::create($request);
+                $this->stock_service->updateStock($request, $lastQuantity);
+                break;
+            case 'purchase':
+                $this->purchase_service->createWithMoisture($request);
+                if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $amount>0) {
+                    CreditPurchase::create($request);
+                    $this->account_payable_service->updateOrInsert($request);
+                }
+                $this->stock_service->updateStock($request, $lastQuantity);
+                break;
+            case 'receive-payment':
+                $this->account_receiveable_service->reduce($request);
+                break;
+            case 'payment':
+                $this->account_payable_service->reduce($request);
+                break;
+            case 'investment':
+            case 'withdraw':
+                $newInvestment = self::investmentNewTotal($request);
+                Investment::create([
+                    'ledger_id' => $ledger->id,
+                    'user_id'      => $request['user_id'],
+                    'type'         => $request['ledger_type'] ?? 'investment',
+                    'amount'       => $amount,
+                    'total_amount' =>  $newInvestment,
+                    'date'         => $request['date'],
+                ]);
+                break;
+        }
+        return $ledger;
+      });
+    }
+
+    public function handleUpdate(array $request, int $id)
+    {
+        return DB::transaction(function () use ($request, $id) {
+            $ledger = self::find($id);
+            if ($ledger->ledger_type == $request['ledger_type']) {
+                $request['payment_type'] = LedgerHelper::resolvePaymentType($request);
+                $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
+                $request['type'] = $typeAndNewTotal['type'] ?? 'investment';
+                $request['total_amount'] = $typeAndNewTotal['newTotal'] ?? 0;
+                // Update ledger itself
+                if($request['ledger_type']!=='moisture_loss' && $request['ledger_type']!=='purchase' && $request['ledger_type']!=='sale' && $request['ledger_type']!=='receive-payment' && $request['ledger_type']!=='payment')
+                $ledger->update($request);
+                $newInvestment = self::investmentNewTotal($request, $ledger->investment ? $ledger->investment->id : null);
+
+                // Update relation based on ledger_type
+                switch ($request['ledger_type']) {
+                    case 'sale':
+                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
+                        // Update sale relation
+                        $ledger->sale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
+                            $ledger->creditSale()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                            $oldCustomerId = $ledger->customer_id;
+                            $this->account_receiveable_service->updateOrInsert($request, true, $oldCustomerId);
+                        }
+                        // Finally, update the ledger record
+                        $ledger->update($request);
+                        break;
+                    case 'purchase':
+                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
+                        $this->purchase_service->updateWithMoisture($ledger->id, $request);
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $request['amount']>0) {
+                            $ledger->creditPurchase()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                            $this->account_payable_service->updateOrInsert($request, true);
+                        }
+                        $ledger->update($request);
+                        break;
+                    case 'expense':
+                        $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                    case 'moisture_loss':
+                        $request['loss_quantity'] = $request['quantity'];
+                        LedgerHelper::adjustStockOnUpdate($ledger, $request);
+                        $ledger->update($request);
+                        $ledger->expense()->updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                    case 'receive-payment':
+                        $this->handlePaymentUpdate($ledger, $request, 'receivable');
+                        break;
+
+                    case 'payment':
+                        $this->handlePaymentUpdate($ledger, $request, 'payable');
+                        break;
+                    case 'investment':
+                    case 'withdraw':
+                        $request['total_amount'] = $newInvestment;
+                        $request['type']         = $request['ledger_type'];
+                        Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
+                        break;
+                }
+                $ledger= $ledger->fresh();                
+                RecalculateTotalsJob::dispatch(
+                    \App\Models\Ledger::class,
+                    'type',
+                    $ledger->id,
+                    [],
+                    $ledger->total_amount
+                );
+                if (in_array($ledger->ledger_type, ['investment', 'withdraw'])) {
+                            RecalculateTotalsJob::dispatch(
+                                \App\Models\Investment::class,
+                                'type',
+                                $ledger->investment?->id ?? 0,
+                                ['user_id' => $ledger->user_id],
+                                $newInvestment
+                            );
+                    }
+            }
+            return $ledger;
+        });
+    }
+
+    public function handleDelete(int $id)
     {
         return DB::transaction(function () use ($id) {
             $ledger = Ledger::with(['sale', 'purchase', 'expense', 'investment'])->findOrFail($id);
@@ -548,7 +562,6 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     RecalculateTotalsJob::dispatch(
                         \App\Models\Investment::class,
                         'type',
-                        'amount',
                         $invId ?? 0,
                         ['user_id' => $ledger->user_id]
                     );
@@ -561,10 +574,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             RecalculateTotalsJob::dispatch(
                 \App\Models\Ledger::class,
                 'type',
-                'amount',
                 $id
             );
             return true;
         });
     }
+
 }

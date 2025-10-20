@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\AppEnum;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -14,7 +15,6 @@ class RecalculateTotalsJob implements ShouldQueue
 
     protected $model;
     protected $typeField;
-    protected $amountField;
     protected $id;
     protected $extraWhere;
     protected $startingTotal;
@@ -22,11 +22,10 @@ class RecalculateTotalsJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($model, $typeField, $amountField, $id, $extraWhere = [], $startingTotal = null)
+    public function __construct($model, $typeField, $id, $extraWhere = [], $startingTotal = null)
     {
         $this->model = $model;
         $this->typeField = $typeField;
-        $this->amountField = $amountField;
         $this->id = $id;
         $this->extraWhere = $extraWhere;
         $this->startingTotal = $startingTotal;
@@ -54,10 +53,10 @@ class RecalculateTotalsJob implements ShouldQueue
         $previousTotal = $previousTotalQuery->latest('id')->value('total_amount') ?? 0;
         }
         foreach ($subsequentRows as $row) {
-            if ($row->{$this->typeField} === 'credit' || $row->{$this->typeField} === 'investment') {
-                $previousTotal += $row->{$this->amountField};
+            if ($row->{$this->typeField} === AppEnum::Credit->value || $row->{$this->typeField} === 'investment') {
+                $previousTotal += ($row->payment_type==AppEnum::Credit->value || $row->payment_type==AppEnum::Partial->value) ?  $row->paid_amount : $row->amount ;
             } elseif ($row->{$this->typeField} === 'debit' || $row->{$this->typeField} === 'withdraw') {
-                $previousTotal -= $row->{$this->amountField};
+                $previousTotal -= ($row->payment_type==AppEnum::Credit->value || $row->payment_type==AppEnum::Partial->value) ?  $row->paid_amount : $row->amount ;
             }
 
             $row->update(['total_amount' => $previousTotal]);
