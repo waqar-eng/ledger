@@ -19,7 +19,7 @@ class LedgerHelper
     {
         $stockService = app(StockService::class);
         $oldQty = $ledger->quantity ?? 0;
-        $currentStock = $stockService->checkStock($request);
+        $currentStock = $stockService->checkStock($request,$oldQty);
 
         return match ($request['ledger_type']) {
             'sale', 'moisture_loss' => $stockService->updateStock($request, $currentStock + $oldQty),

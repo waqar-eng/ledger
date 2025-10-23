@@ -24,7 +24,7 @@ class StockService extends BaseService implements StockServiceInterface
     {
         return Stock::with(['category'])
             ->when($start_date && $end_date, fn($q) => app(LedgerService::class)->applyDateFilters($q, $start_date, $end_date))
-            
+
             ->when(!empty($filters['category_id']), fn($q) =>
             $q->whereHas('category', fn($catQ) =>
                 $catQ->where('category_id', 'like', '%' . $filters['category_id'] . '%')
@@ -33,19 +33,19 @@ class StockService extends BaseService implements StockServiceInterface
             ->orderByDesc('id')->get();
     }
 
-    public function checkStock($data)  {
+    public function checkStock($data,$oldQty=0)  {
         $lastStock = Stock::where('category_id', $data['category_id'])->first();
 
         $lastQuantity = $lastStock?->total_quantity ?? 0;
-
+        $available = $lastQuantity +$oldQty;
         if ($data['ledger_type'] === AppEnum::Sale->value) {
             // Validation: prevent sale if insufficient stock
-            if ($lastQuantity < $data['quantity']) {
+            if ($available < $data['quantity']) {
                 throw new \Exception("Not enough stock available. Only {$lastQuantity} left.");
             }
         }
         return $lastQuantity;
-        
+
     }
 
     public function updateStock(array $data, $lastQuantity)

@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
 class LedgerService extends BaseService implements LedgerServiceInterface
 {
     public function __construct(
-    LedgerRepositoryInterface $repository, 
+    LedgerRepositoryInterface $repository,
     private StockService $stock_service,
     private AccountReceiveableService $account_receiveable_service,
     private AccountPayableService $account_payable_service,
@@ -33,19 +33,19 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     private PurchaseService $purchase_service,
     )
     {
-        parent::__construct($repository); 
+        parent::__construct($repository);
     }
 
     public function findAll(array $filters)
     {
         $perPage = $filters['per_page'] ?? AppConstants::DEFAULT_PER_PAGE;
-
+        $page = $filters['page'] ?? 1;
         [$start_date, $end_date] = $this->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
         $query = $this->buildQuery($filters, $start_date, $end_date);
-
+        $paginated = $this->getFilteredTransactionsWithBalance($query , $page , $perPage);
         $allData = (clone $query)->get();
-        $paginated = $query->paginate($perPage);
+        // $paginated = $query->paginate($perPage);
         $totals = $this->calculateTotals($allData, $filters);
 
         return [
@@ -53,6 +53,33 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             'totals' => $totals
         ];
     }
+    private function getFilteredTransactionsWithBalance($query, $page, $perPage)
+    {
+        $transactions = $query->get();
+        $sortedForBalance  = $transactions->sortBy('id')->values();
+
+        $runningBalance = 0;
+        foreach ($sortedForBalance as $tran) {
+            $amount = (float) $tran->amount;
+            $runningBalance += ($tran->type === 'credit') ? $amount : -$amount;
+
+            $original = $transactions->firstWhere('id', $tran->id);
+            if ($original) {
+                $original->calculated_balance = $runningBalance;
+            }
+        }
+
+        $paginated = $transactions->forPage($page,$perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginated,
+            $transactions->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+    }
+
     public function parseDates($start, $end): array
     {
         if (!empty($start) && !empty($end)) {
@@ -206,9 +233,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $ledgerType = $request['ledger_type'];
         $type = self::getLedgerType($ledgerType);
 
-        $newAmount = ($ledgerType == AppEnum::Investment->value 
-        || $ledgerType == AppEnum::Expense->value 
-        || $ledgerType == AppEnum::Withdraw->value) 
+        $newAmount = ($ledgerType == AppEnum::Investment->value
+        || $ledgerType == AppEnum::Expense->value
+        || $ledgerType == AppEnum::Withdraw->value
+        || $ledgerType == AppEnum::MoistureLoss->value)
         ? $request['amount'] : $request['paid_amount'];
 
         $newTotal = $type === AppEnum::Credit->value
@@ -268,6 +296,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             'sales' => $collection->where('ledger_type', 'sale')->sum('amount'),
             'expenses' => $collection->where('ledger_type', 'expense')->sum('amount'),
             'purchases' => $collection->where('ledger_type', 'purchase')->sum('amount'),
+            'withdraw' => $collection->where('ledger_type', 'withdraw')->sum('amount'),
         ];
 
         return [
@@ -353,7 +382,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         return DB::transaction(function () use ($request) {
         //Step 1: Get the previous total amount from last valid ledger
         $amount = $request['amount'] ?? 0;
-        $lastQuantity = $this->stock_service->checkStock($request);
+        $lastQuantity = $this->stock_service->checkStock($request );
         $typeAndNewtotal = self::ledgerNewTotalAndType($request);
         $request['payment_type'] = LedgerHelper::resolvePaymentType($request);
         // Set derived fields in request data
@@ -475,7 +504,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         Investment::updateOrCreate(['ledger_id' => $ledger->id], $request);
                         break;
                 }
-                $ledger= $ledger->fresh();                
+                $ledger= $ledger->fresh();
                 RecalculateTotalsJob::dispatch(
                     \App\Models\Ledger::class,
                     'type',
@@ -534,11 +563,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     $ledger->expense?->delete();
                     break;
                 case 'receive-payment':
-                    // 🧾 Reverse the receive-payment impact
+                    //  Reverse the receive-payment impact
                     $customerId = $ledger->customer_id;
                     $paidAmount = $ledger->paid_amount ?? 0;
                     $categoryId = $ledger->category_id;
-    
+
                     if ($paidAmount > 0 && $customerId && $categoryId) {
                         // Call restore() to return this amount to credit sales
                         $this->account_receiveable_service->restore($customerId, $paidAmount, $categoryId);
@@ -552,7 +581,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     if ($paidAmount > 0 && $customerId && $categoryId) {
                         // Supplier payment deleted → restore payable balance
                         $this->account_payable_service->restore($customerId, $paidAmount, $categoryId);
-                    }    
+                    }
                     break;
                 case 'investment':
                 case 'withdraw':
