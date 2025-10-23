@@ -60,27 +60,35 @@ class LedgerRequest extends FormRequest
             ],
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','receive-payment','payment','moisture_loss','other'])],
             'payment_type' => [
-                'required_if:ledger_type,sale,purchase,payment, receive-payment',
+                 'nullable',
                 Rule::in(['cash', 'credit', 'partial', null]),
             ],
             'remaining_amount' => [
                 'nullable',
                 'numeric',
-                function ($attribute, $value, $fail) {
-                    $paymentType = request('payment_type');
-                    $ledger_type = request('ledger_type');
-            
-                    if (in_array($paymentType, ['credit', 'partial']) && $value <= 0) {
-                        $fail('The '.$attribute.' must be greater than 0 for credit or partial payments.');
-                    }
-            
-                    if ($paymentType === 'cash' && $ledger_type!=='receive-payment' && $ledger_type!=='payment' && !in_array($value, [null, 0, '0', '0.00'], true)) {
-                        $fail('The '.$attribute.' must be 0 or empty when payment type is cash.');
-                    }
-                },
             ],
                 'payment_method' => ['nullable', Rule::in(['cash', 'bank'])],
-                'paid_amount' => 'nullable|numeric|min:0',
+                'paid_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                    function ($attribute, $value, $fail) {
+                        $amount = (float) request('amount');              // total bill amount
+                        $remaining = (float) request('remaining_amount'); // remaining amount
+                        $paymentType = request('payment_type');
+
+                        // Prevent overpayment more than total
+                        if ($value > $amount) {
+                            $fail('The '.$attribute.' cannot be greater than the total amount ('.$amount.').');
+                        }
+                        // Prevent overpayment beyond remaining for credit or partial
+                        if (in_array($paymentType, ['credit', 'partial']) && $value > $remaining) {
+                            $fail('The '.$attribute.' cannot be greater than the remaining amount ('.$remaining.').');
+                        }
+
+                    },
+                ],
+
                 'rate' => 'nullable|numeric|min:0',
                 'quantity' => 'nullable|numeric|min:0',
                 'bill_no' => 'required|string|max:255',
@@ -95,13 +103,81 @@ class LedgerRequest extends FormRequest
 
         ];
         $idRule=['id'  => 'required|integer|exists:ledgers,id'];
+        $updateRule = [
+            'description' => 'required|string|max:255',
+             AppEnum::Amount->value => [
+                'nullable',
+                'required_unless:ledger_type,purchase',
+            ],
+            'date' => 'required|date',
+            // Conditional validation
+            'customer_id' => [
+                'nullable',
+                'exists:customers,id',
+                'required_unless:ledger_type,withdraw,investment,expense,moisture_loss',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->user_id) {
+                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
+                    }
+                },
+            ],
+            'user_id' => [
+                'nullable',
+                'exists:users,id',
+                'required_if:ledger_type,withdraw,investment',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->customer_id) {
+                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
+                    }
+                },
+            ],
+
+            'category_id'         => [
+                'nullable',
+                'exists:categories,id',
+                'required_if:ledger_type,moisture_loss,sale,purchase',
+            ],
+            'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','receive-payment','payment','moisture_loss','other'])],
+            'payment_type' => [
+                 'nullable',
+                Rule::in(['cash', 'credit', 'partial', null]),
+            ],
+            'remaining_amount' => [
+                'nullable',
+                'numeric',
+            ],
+                'payment_method' => ['nullable', Rule::in(['cash', 'bank'])],
+                'paid_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                    function ($attribute, $value, $fail) {
+                        $amount = (float) request('amount');              // total bill amount
+                        $remaining = (float) request('remaining_amount'); // remaining amount
+                        $paymentType = request('payment_type');           // cash / credit / partial
+                        // Prevent overpayment more than total
+                        if ($value > $amount) {
+                            $fail('The '.$attribute.' cannot be greater than the total amount ('.$amount.').');
+                        }
+                        // Prevent overpayment beyond remaining for credit or partial
+                        if (in_array($paymentType, ['credit', 'partial']) && $value > $remaining) {
+                           // $fail('The '.$attribute.' cannot be greater than the remaining amount ('.$remaining.').');
+                        }
+                    },
+                ],
+            'rate' => 'nullable|numeric|min:0',
+            'quantity' => 'nullable|numeric|min:0',
+            'bill_no' => 'required|string|max:255',
+        ];
+
         switch ($this->method()) {
             case 'GET':
                 return $getRules;
             case 'POST':
+                return $postRules;
             case 'PUT':
             case 'PATCH':
-                return $postRules;
+                return $updateRule;
             case 'DELETE':
                 return $idRule;
             default:
