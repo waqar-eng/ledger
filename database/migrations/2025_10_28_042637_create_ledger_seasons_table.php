@@ -1,5 +1,6 @@
 <?php
 
+use App\AppEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,7 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->date('start_date');
             $table->date('end_date');
-            $table->enum('status', ['upcoming', 'active', 'completed'])->default('upcoming');
+            $table->enum('status', [AppEnum::Upcoming->value, AppEnum::Active->value, AppEnum::Completed->value])->default(AppEnum::Upcoming->value);
             $table->softDeletes();
             $table->timestamps();
 });

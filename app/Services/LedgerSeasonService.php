@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\AppEnum;
 use App\Models\LedgerSeason;
 use App\Repositories\Interfaces\LedgerSeasonRepositoryInterface;
 use App\Services\Interfaces\LedgerSeasonServiceInterface;
@@ -23,20 +24,16 @@ class LedgerSeasonService extends BaseService implements LedgerSeasonServiceInte
             return DB::transaction(function () use ($data, $id) {
                 $season = LedgerSeason::findOrFail($id);
 
-
                 if (
-                    ($data['status'] ?? $season->status) === 'active' &&
-                    ($data['end_date'] ?? $season->end_date) &&
-                    now()->gt($data['end_date'] ?? $season->end_date)
+                    ($data[AppEnum::STATUS->value] ?? $season->status) === AppEnum::Active->value &&
+                    ($data[AppEnum::EndDate->value] ?? $season->end_date) &&
+                    now()->gt($data[AppEnum::EndDate->value] ?? $season->end_date)
                 ) {
-                    $data['status'] = 'completed';
+                    $data[AppEnum::STATUS->value] = AppEnum::Completed->value;
                 }
 
                 $season->update($data);
                 return $season;
             });
         }
-
-
-
 }

@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Illuminate\Console\Scheduling\Schedule $schedule){
-        $schedule->command('app:complete-ended-seasons')->everyMinute()
+        $schedule->command('app:complete-ended-seasons')->daily()
         ->appendOutputTo(storage_path('logs/schedule.log'));
     })
 ->create();
