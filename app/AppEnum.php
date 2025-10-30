@@ -17,7 +17,7 @@ enum AppEnum:string
     case Opening = 'opening';
 
     case Additional = 'additional';
-    
+
     case Investment = 'investment';
 
     case Amount = 'amount';
@@ -37,5 +37,10 @@ enum AppEnum:string
     case UnPaid = 'unpaid';
 
     case ReceivePayment= 'receive-payment';
+    case Active = 'active';
+    case STATUS = 'status';
+    case Completed = 'completed';
+    case EndDate = 'end_date';
+    case Upcoming = 'upcoming';
 
 }

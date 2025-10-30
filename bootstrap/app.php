@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,7 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(
             \Illuminate\Http\Middleware\HandleCors::class);
+            $middleware->alias([
+        'check.active.season' => \App\Http\Middleware\CheckActiveSeason::class,
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->withSchedule(function (Illuminate\Console\Scheduling\Schedule $schedule){
+        $schedule->command('app:complete-ended-seasons')->daily()
+        ->appendOutputTo(storage_path('logs/schedule.log'));
+    })
+->create();

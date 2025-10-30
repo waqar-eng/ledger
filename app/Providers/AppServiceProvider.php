@@ -6,6 +6,8 @@ use App\Policies\LedgerPolicy;
 use App\Repositories\AppSettingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
+use App\Repositories\Interfaces\LedgerSeasonRepositoryInterface;
+use App\Services\Interfaces\LedgerSeasonServiceInterface;
 use Illuminate\Support\ServiceProvider;
 
 // User bindings
@@ -51,6 +53,7 @@ use App\Repositories\Interfaces\InvestmentRepositoryInterface;
 use App\Repositories\Interfaces\Log_activityRepositoryInterface;
 use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Repositories\InvestmentRepository;
+use App\Repositories\LedgerSeasonRepository;
 use App\Repositories\Log_activityRepository;
 use App\Repositories\StockRepository;
 use App\Services\AppSettingService;
@@ -59,6 +62,7 @@ use App\Services\Interfaces\AppSettingServiceInterface;
 use App\Services\Interfaces\CategoryServiceInterface;
 use App\Services\Interfaces\Log_activityServiceInterface;
 use App\Services\Interfaces\StockServiceInterface;
+use App\Services\LedgerSeasonService;
 use App\Services\Log_activityService;
 use App\Services\StockService;
 use Illuminate\Support\Facades\Gate;
@@ -72,7 +76,7 @@ class AppServiceProvider extends ServiceProvider
             return LedgerPolicy::class;
         });
     }
-    
+
     public function register()
     {
         // User
@@ -108,12 +112,15 @@ class AppServiceProvider extends ServiceProvider
         //category
         $this->app->bind(CategoryServiceInterface::class, CategoryService::class);
         $this->app->bind(CategoryRepositoryInterface::class , CategoryRepository::class);
-        
+
         $this->app->bind(StockServiceInterface::class, StockService::class);
         $this->app->bind(StockRepositoryInterface::class , StockRepository::class);
-        
+
         $this->app->bind(AppSettingServiceInterface::class, AppSettingService::class);
         $this->app->bind(AppSettingRepositoryInterface::class , AppSettingRepository::class);
-        
+        // ledger season
+        $this->app->bind(LedgerSeasonRepositoryInterface::class, LedgerSeasonRepository::class);
+        $this->app->bind(LedgerSeasonServiceInterface::class, LedgerSeasonService::class);
+
     }
 }
