@@ -45,7 +45,6 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $query = $this->buildQuery($filters, $start_date, $end_date);
         $paginated = $this->getFilteredTransactionsWithBalance($query , $page , $perPage);
         $allData = (clone $query)->get();
-        // $paginated = $query->paginate($perPage);
         $totals = $this->calculateTotals($allData, $filters);
 
         return [
@@ -61,7 +60,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $runningBalance = 0;
         foreach ($sortedForBalance as $tran) {
             $amount = (float) $tran->amount;
-            $runningBalance += ($tran->type === 'credit') ? $amount : -$amount;
+            $runningBalance += $tran->amount;
 
             $original = $transactions->firstWhere('id', $tran->id);
             if ($original) {
@@ -102,6 +101,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             ->when(!empty($filters['type']), fn($q) => $q->where('type', $filters['type']))
             ->when(!empty($filters['ledger_type']), fn($q) => $q->where('ledger_type', $filters['ledger_type']))
             ->when(!empty($filters['category_id']), fn($q) => $q->where('category_id', $filters['category_id']))
+            ->when(!empty($filters['bill_no']), fn($q) => $q->where('bill_no', $filters['bill_no']))
+
             ->when(!empty($filters['is_credit_sale']), function ($q) {
                 $q->where(function ($query) {
                     $query->where(function ($sub) {
