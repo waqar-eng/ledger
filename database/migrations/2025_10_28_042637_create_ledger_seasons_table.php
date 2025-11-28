@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->date('start_date');
-            $table->date('end_date');
+            $table->date('end_date')->nullable();
             $table->enum('status', [AppEnum::Upcoming->value, AppEnum::Active->value, AppEnum::Completed->value])->default(AppEnum::Upcoming->value);
             $table->softDeletes();
             $table->timestamps();
