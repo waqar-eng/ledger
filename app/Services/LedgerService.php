@@ -461,8 +461,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 ? ($request['paid_amount'] ?? 0)
                 : ($request['amount']??0);
 
-            // delta logic
-            if (in_array($ledger->ledger_type, ['sale', 'investment', 'receive-payment'])) {
+            // Determine how much the change in this ledger affects future running totals.
+            // For sales/investments/received-payments the total increases forward in time (new - old).
+            // For purchases/expenses/payments the total decreases forward in time (old - new).
+            if (in_array($ledger->ledger_type, [AppEnum::Sale->value, AppEnum::Investment->value, AppEnum::ReceivePayment->value])) {
                 $delta = $newEffective - $oldEffective;
             } else {
                 $delta = $oldEffective - $newEffective;
@@ -557,7 +559,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 : $ledger->amount;
 
             // Delta = negative for credit-side, positive for debit-side
-            $delta = in_array($ledger->ledger_type, ['sale', 'investment', 'receive-payment'])
+            $delta = in_array($ledger->ledger_type, [AppEnum::Sale->value, AppEnum::Investment->value, AppEnum::ReceivePayment->value])
                     ? -$effectiveAmount
                     : $effectiveAmount;
             // Handle related record
