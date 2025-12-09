@@ -14,21 +14,19 @@ class RecalculateTotalsJob implements ShouldQueue
     use Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
 
     protected $model;
-    protected $typeField;
     protected $id;
+    protected $delta;
     protected $extraWhere;
-    protected $startingTotal;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($model, $typeField, $id, $extraWhere = [], $startingTotal = null)
+    public function __construct($model, $id, $delta, $extraWhere = [])
     {
         $this->model = $model;
-        $this->typeField = $typeField;
         $this->id = $id;
+        $this->delta = $delta;
         $this->extraWhere = $extraWhere;
-        $this->startingTotal = $startingTotal;
     }
 
     /**
@@ -36,30 +34,16 @@ class RecalculateTotalsJob implements ShouldQueue
      */
     public function handle(): void
     {
-         $query = $this->model::where('id', '>', $this->id)->orderBy('id');
+        $query = $this->model::where('id', '>', $this->id)->orderBy('id');
+
         if (!empty($this->extraWhere)) {
             $query->where($this->extraWhere);
         }
-        $subsequentRows = $query->get();
-        // Determine the previous total to start the running sum
-        if ($this->startingTotal !== null) {
-            // Use provided starting total (update case)
-            $previousTotal = $this->startingTotal;
-        } else {
-        $previousTotalQuery = $this->model::where('id', '<', $this->id);
-        if (!empty($this->extraWhere)) {
-            $previousTotalQuery->where($this->extraWhere);
-        }
-        $previousTotal = $previousTotalQuery->latest('id')->value('total_amount') ?? 0;
-        }
-        foreach ($subsequentRows as $row) {
-            if ($row->{$this->typeField} === AppEnum::Credit->value || $row->{$this->typeField} === 'investment') {
-                $previousTotal += ($row->payment_type==AppEnum::Credit->value || $row->payment_type==AppEnum::Partial->value) ?  $row->paid_amount : $row->amount ;
-            } elseif ($row->{$this->typeField} === 'debit' || $row->{$this->typeField} === 'withdraw') {
-                $previousTotal -= ($row->payment_type==AppEnum::Credit->value || $row->payment_type==AppEnum::Partial->value) ?  $row->paid_amount : $row->amount ;
-            }
 
-            $row->update(['total_amount' => $previousTotal]);
+        foreach ($query->get() as $row) {
+            $row->update([
+                'total_amount' => $row->total_amount + $this->delta
+            ]);
         }
     }
 }
