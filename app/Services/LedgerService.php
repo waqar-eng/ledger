@@ -449,6 +449,24 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         return DB::transaction(function () use ($request, $id) {
             $ledger = self::find($id);
+           $oldEffective = 
+                ($ledger->payment_type == AppEnum::Credit->value ||
+                $ledger->payment_type == AppEnum::Partial->value)
+                ? $ledger->paid_amount
+                : $ledger->amount;
+
+            $newEffective =
+                ($request['payment_type'] == AppEnum::Credit->value ||
+                $request['payment_type'] == AppEnum::Partial->value)
+                ? ($request['paid_amount'] ?? 0)
+                : ($request['amount']??0);
+
+            // delta logic
+            if (in_array($ledger->ledger_type, ['sale', 'investment', 'receive-payment'])) {
+                $delta = $newEffective - $oldEffective;
+            } else {
+                $delta = $oldEffective - $newEffective;
+            }
             if ($ledger->ledger_type == $request['ledger_type']) {
                 $request['payment_type'] = LedgerHelper::resolvePaymentType($request);
                 $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
@@ -476,9 +494,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     case 'purchase':
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         $this->purchase_service->updateWithMoisture($ledger->id, $request);
-                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $request['amount']>0) {
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $newEffective >0) {
                             $ledger->creditPurchase()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                            $this->account_payable_service->updateOrInsert($request, true);
+                            $requestWithEffective = $request;
+                            $requestWithEffective['amount'] = $newEffective;
+                            $this->account_payable_service->updateOrInsert($requestWithEffective, true);
                         }
                         $ledger->update($request);
                         break;
@@ -508,18 +528,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $ledger= $ledger->fresh();
                 RecalculateTotalsJob::dispatch(
                     \App\Models\Ledger::class,
-                    'type',
                     $ledger->id,
-                    [],
-                    $ledger->total_amount
+                    $delta
                 );
                 if (in_array($ledger->ledger_type, ['investment', 'withdraw'])) {
                             RecalculateTotalsJob::dispatch(
                                 \App\Models\Investment::class,
-                                'type',
                                 $ledger->investment?->id ?? 0,
-                                ['user_id' => $ledger->user_id],
-                                $newInvestment
+                                $delta
                             );
                     }
             }
@@ -534,6 +550,16 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             if ($ledger->id == Ledger::min('id')) {
                 throw new \Exception("You cannot delete the very first ledger (base investment).");
             }
+            // Compute effective amount for delta propagation
+            $effectiveAmount = 
+                ($ledger->payment_type == AppEnum::Credit->value || $ledger->payment_type == AppEnum::Partial->value)
+                ? ($ledger->paid_amount ?? 0)
+                : $ledger->amount;
+
+            // Delta = negative for credit-side, positive for debit-side
+            $delta = in_array($ledger->ledger_type, ['sale', 'investment', 'receive-payment'])
+                    ? -$effectiveAmount
+                    : $effectiveAmount;
             // Handle related record
             switch ($ledger->ledger_type) {
                 case 'sale':
@@ -566,22 +592,23 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 case 'receive-payment':
                     //  Reverse the receive-payment impact
                     $customerId = $ledger->customer_id;
-                    $paidAmount = $ledger->paid_amount ?? 0;
+                    // $paidAmount = $ledger->paid_amount ?? 0;
                     $categoryId = $ledger->category_id;
 
-                    if ($paidAmount > 0 && $customerId && $categoryId) {
+
+                    if ($customerId && $effectiveAmount && $categoryId) {
                         // Call restore() to return this amount to credit sales
-                        $this->account_receiveable_service->restore($customerId, $paidAmount, $categoryId);
+                        $this->account_receiveable_service->restore($customerId, $effectiveAmount, $categoryId);
                     }
                     break;
                 case 'payment':
                     $customerId = $ledger->customer_id;
-                    $paidAmount = $ledger->paid_amount ?? 0;
+                    // $paidAmount = $ledger->paid_amount ?? 0;
                     $categoryId = $ledger->category_id;
 
-                    if ($paidAmount > 0 && $customerId && $categoryId) {
+                    if ($customerId && $effectiveAmount && $categoryId) {
                         // Supplier payment deleted → restore payable balance
-                        $this->account_payable_service->restore($customerId, $paidAmount, $categoryId);
+                        $this->account_payable_service->restore($customerId, $effectiveAmount, $categoryId);
                     }
                     break;
                 case 'investment':
@@ -591,8 +618,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     // Dispatch recalculation in queue
                     RecalculateTotalsJob::dispatch(
                         \App\Models\Investment::class,
-                        'type',
                         $invId ?? 0,
+                        -$effectiveAmount,
                         ['user_id' => $ledger->user_id]
                     );
                     break;
@@ -603,8 +630,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             // Dispatch recalculation for ledgers in queue
             RecalculateTotalsJob::dispatch(
                 \App\Models\Ledger::class,
-                'type',
-                $id
+                $id,
+                $delta
             );
             return true;
         });
