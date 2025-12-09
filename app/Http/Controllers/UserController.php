@@ -83,9 +83,9 @@ class UserController extends Controller
     public function login(Request $request)
     {
         try {
-            $token = $this->userService->loginUser($request);
-            if($token) {
-                return $this->success(['token' => $token], User::LOGIN_SUCCESS);
+            $userDetails = $this->userService->loginUser($request);
+            if($userDetails) {
+                return $this->success(['token' => $userDetails['token'], 'user'=>$userDetails['user']], User::LOGIN_SUCCESS);
             }
             else{
                 return $this->error(User::LOGIN_ERROR, 500);
