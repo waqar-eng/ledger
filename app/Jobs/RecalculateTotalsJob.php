@@ -34,7 +34,7 @@ class RecalculateTotalsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $query = $this->model::where('id', '>', $this->id);
+        $query = $this->model::where('id', '>', $this->id)->orderBy('id');
 
         if (!empty($this->extraWhere)) {
             $query->where($this->extraWhere);
