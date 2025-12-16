@@ -20,10 +20,16 @@ class LedgerSeason extends Model
         'status',
     ];
 
+    public static function getActiveSeason(){
+       return self::where('status','active')->first();
+    }
+
     public const LEDGER_SEASONS_RETRIEVED = 'Seasons retrieved successfully';
     public const LEDGER_SEASON_CREATED    = 'Season created successfully';
     public const LEDGER_SEASON_RETRIEVED  = 'Season retrieved successfully';
     public const LEDGER_SEASON_UPDATED    = 'Season updated successfully';
     public const LEDGER_SEASON_DELETED    = 'Season deleted successfully';
+    public const LEDGER_SEASON_SUMMARY    = 'Season summary retrived successfully';
+    public const NO_ACTIVE_SEASON    = 'No active season found. Please activate or create a season before creating ledger.';
 
 }

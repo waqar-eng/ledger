@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\Expense;
 use App\Models\Investment;
+use App\Models\LedgerSeason;
 use App\Models\Stock;
 use App\Services\Helpers\LedgerHelper;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +94,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function buildQuery(array $filters, $start_date, $end_date)
     {
-        return Ledger::with(['customer', 'user', 'category'])
+        $currentSeason= LedgerSeason::getActiveSeason();
+         if (!$currentSeason) {
+            throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
+        }
+        $query= Ledger::with(['customer', 'user', 'category'])
+        ->whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date])
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['customer_id']), fn($q) => $q->where('customer_id', $filters['customer_id']))
             ->when(!empty($filters['user_id']), fn($q) => $q->where('user_id', $filters['user_id']))
@@ -126,6 +132,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 });
             })
             ->orderByDesc('id');
+        return $query;
     }
 
     public function applyDateFilters($query, $start_date, $end_date)
@@ -224,12 +231,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public static function ledgerNewTotalAndType($request, $id = null)
     {
-        $query = Ledger::query();
+        $currentSeason= LedgerSeason::getActiveSeason();
+        $query = Ledger::whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date]);
         if ($id) {
             $query->where('id', '<', $id);
         }
 
-        $latestLedger = $query->latest()->first();
+        $latestLedger = $query->latest()->first() ? $query->latest()->first() : 0;
         $previousTotal = $latestLedger?->total_amount ?? 0;
         $ledgerType = $request['ledger_type'];
         $type = self::getLedgerType($ledgerType);
@@ -288,10 +296,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     public function getDashboardSummary(): array
     {
         $now = Carbon::now();
+        $season = LedgerSeason::getActiveSeason();
+        $start = $season->start_date ?? '';
+        $end   = $season->end_date ?? '';
 
-        $daily = Ledger::whereDate('created_at', $now->toDateString())->get();
-        $monthly = Ledger::whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->get();
-        $yearly = Ledger::whereYear('created_at', $now->year)->get();
+        $daily = Ledger::whereBetween('created_at', [$start, $end])->whereDate('created_at', $now->toDateString())->get();
+        $monthly = Ledger::whereBetween('created_at', [$start, $end])->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->get();
+        $yearly = Ledger::whereBetween('created_at', [$start, $end])->whereYear('created_at', $now->year)->get();
 
         $formatTotals = fn($collection) => [
             'sales' => $collection->where('ledger_type', 'sale')->sum('amount'),

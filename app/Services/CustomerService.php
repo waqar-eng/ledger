@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\Interfaces\CustomerRepositoryInterface;
 use App\Services\Interfaces\CustomerServiceInterface;
 use App\Models\Customer;
+use App\Models\LedgerSeason;
 
 class CustomerService extends BaseService implements CustomerServiceInterface
 {
@@ -26,8 +27,20 @@ class CustomerService extends BaseService implements CustomerServiceInterface
 {
     $perPage = $filters['per_page'] ?? null;
     $search = $filters['search'] ?? '';
-
-    $query = Customer::with(['ledgers', 'accountReceivables', 'accountPayables'])
+    $season = LedgerSeason::getActiveSeason();
+    $start = $season->start_date ?? '';
+    $end   = $season->end_date ?? '';
+    $query = Customer::with([
+            'ledgers' => function ($q) use ($start, $end) {
+                $q->whereBetween('created_at', [$start, $end]);
+            },
+            'accountReceivables' => function ($q) use ($start, $end) {
+                $q->whereBetween('created_at', [$start, $end]);
+            },
+            'accountPayables' => function ($q) use ($start, $end) {
+                $q->whereBetween('created_at', [$start, $end]);
+            },
+        ])
         ->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")

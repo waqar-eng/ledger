@@ -38,7 +38,7 @@ class StockService extends BaseService implements StockServiceInterface
 
         $lastQuantity = $lastStock?->total_quantity ?? 0;
         $available = $lastQuantity +$oldQty;
-        if ($data['ledger_type'] === AppEnum::Sale->value) {
+        if ($data['ledger_type'] === AppEnum::Sale->value || $data['ledger_type'] === AppEnum::MoistureLoss->value) {
             // Validation: prevent sale if insufficient stock
             if ($available < $data['quantity']) {
                 throw new \Exception("Not enough stock available. Only {$lastQuantity} left.");
