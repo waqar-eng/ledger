@@ -34,16 +34,26 @@ class RecalculateTotalsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $chunkSize = (int) env('CHUNK_SIZE', 50);
+        $records=[];
         $query = $this->model::where('id', '>', $this->id)->orderBy('id');
 
         if (!empty($this->extraWhere)) {
             $query->where($this->extraWhere);
         }
-
-        foreach ($query->get() as $row) {
-            $row->update([
-                'total_amount' => $row->total_amount + $this->delta
-            ]);
-        }
+        $query->chunk($chunkSize, function ($rows) use ($records) {
+            foreach ($rows as $row) {
+                $records[]=[
+                    'id'=>$row->id,
+                    'total_amount'=>$row->total_amount + $this->delta,
+                    'description' => $row->description ?? '',
+                ];
+            }
+            $this->model::upsert(
+                $records,
+                ['id'],           // unique key
+                ['total_amount']  // columns to update
+            );
+        });
     }
 }
