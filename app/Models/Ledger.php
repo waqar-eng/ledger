@@ -17,20 +17,20 @@ class Ledger extends Model
      */
     protected $fillable = [
         'description',
-        'amount',
+        // 'amount',
         'type',
         'date',
-        'customer_id',
-        'category_id',
-        'user_id',
+        // 'customer_id',
+        // 'category_id',
+        // 'user_id',
         'ledger_type',
         'total_amount',
-        'payment_type',
-        'payment_method',
-        'paid_amount',
-        'remaining_amount',
-        'quantity',
-        'rate',
+        // 'payment_type',
+        // 'payment_method',
+        // 'paid_amount',
+        // 'remaining_amount',
+        // 'quantity',
+        // 'rate',
         'bill_no'
 
     ];
@@ -91,6 +91,10 @@ public function expense()
 public function stock()
 {
     return $this->hasOne(Stock::class);
+}
+public function payment()
+{
+    return $this->hasOne(Payment::class);
 }
 
 public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transaction";

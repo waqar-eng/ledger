@@ -21,7 +21,7 @@ class Customer extends Model
         'email',
         'type',
     ];
-
+    protected $hidden = ['deleted_at', 'updated_at'];
     public function ledgers()
     {
         return $this->hasMany(Ledger::class);

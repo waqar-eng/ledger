@@ -53,17 +53,20 @@ class AccountPayableService
                 if ($remainingPayment <= 0) break;
 
                 $available = (float) $purchase->remaining_amount;
+                if ($available <= 0) continue;
 
                 if ($remainingPayment >= $available) {
                     $remainingPayment -= $available;
                     $purchase->update([
                         'remaining_amount' => 0,
+                        'paid_amount' => $purchase->amount,
                         'status' => AppEnum::Paid->value,
                     ]);
                 } else {
                     $purchase->update([
                         'remaining_amount' => $available - $remainingPayment,
-                        'status' => AppEnum::Partial->value,
+                        'status' => $purchase->remaining_amount > 0 ? AppEnum::Partial->value : AppEnum::Paid->value,
+                        'paid_amount' => $purchase->paid_amount + $remainingPayment,
                     ]);
                     $remainingPayment = 0;
                     break;

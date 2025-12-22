@@ -29,6 +29,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     LedgerRepositoryInterface $repository,
     private StockService $stock_service,
     private AccountReceiveableService $account_receiveable_service,
+    private PaymentService $payment_service,
     private AccountPayableService $account_payable_service,
     private ReportService $report_service,
     private PurchaseService $purchase_service,
@@ -98,7 +99,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
          if (!$currentSeason) {
             throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
         }
-        $query= Ledger::with(['customer', 'user', 'category'])
+        $query= Ledger::with(['customer', 'user', 'category', 'purchase', 'purchase.customer',
+        'purchase.category','investment', 'investment.user','investment.category', 'expense', 'expense.customer', 'expense.category',
+        'sale', 'sale.customer', 'sale.category', 'payment', 'payment.customer', 'payment.category'
+        ])
         ->whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date])
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['customer_id']), fn($q) => $q->where('customer_id', $filters['customer_id']))
@@ -312,11 +316,9 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         ];
 
         return [
-            'dashboard_summary' => [
                 'daily' => $formatTotals($daily),
                 'monthly' => $formatTotals($monthly),
                 'yearly' => $formatTotals($yearly),
-            ]
         ];
     }
     public function isLatestLedger($id)
@@ -410,9 +412,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
         switch ($request['ledger_type']) {
             case 'sale':
+                $request['status'] = $request['payment_type'];
                 Sale::create($request);
                 if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value])) {
-                    CreditSale::create($request);
+                    // CreditSale::create($request);
                     $this->account_receiveable_service->updateOrInsert($request);
                 }
                 $this->stock_service->updateStock($request, $lastQuantity);
@@ -426,17 +429,20 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'purchase':
+                // $request['status'] = $request['payment_type'];
                 $this->purchase_service->createWithMoisture($request);
                 if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $amount>0) {
-                    CreditPurchase::create($request);
+                    // CreditPurchase::create($request);
                     $this->account_payable_service->updateOrInsert($request);
                 }
                 $this->stock_service->updateStock($request, $lastQuantity);
                 break;
             case 'receive-payment':
+                $this->payment_service->insert($request);
                 $this->account_receiveable_service->reduce($request);
                 break;
             case 'payment':
+                $this->payment_service->insert($request);
                 $this->account_payable_service->reduce($request);
                 break;
             case 'investment':
@@ -460,7 +466,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         return DB::transaction(function () use ($request, $id) {
             $ledger = self::find($id);
-           $oldEffective = 
+           $oldEffective =
                 ($ledger->payment_type == AppEnum::Credit->value ||
                 $ledger->payment_type == AppEnum::Partial->value)
                 ? $ledger->paid_amount
@@ -564,7 +570,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 throw new \Exception("You cannot delete the very first ledger (base investment).");
             }
             // Compute effective amount for delta propagation
-            $effectiveAmount = 
+            $effectiveAmount =
                 ($ledger->payment_type == AppEnum::Credit->value || $ledger->payment_type == AppEnum::Partial->value)
                 ? ($ledger->paid_amount ?? 0)
                 : $ledger->amount;

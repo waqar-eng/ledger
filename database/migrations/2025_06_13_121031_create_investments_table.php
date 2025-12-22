@@ -15,8 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId(column: 'user_id')->constrained('users')
             ->onDelete('cascade')->nullable();
-           
+
             $table->foreignId(column: 'ledger_id')->constrained('ledgers')
+            ->onDelete('cascade')->nullable();
+
+            $table->foreignId(column: 'category_id')->constrained('categories')
             ->onDelete('cascade')->nullable();
 
             $table->enum('type', ['investment', 'withdraw']);

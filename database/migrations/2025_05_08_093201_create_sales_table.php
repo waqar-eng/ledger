@@ -21,9 +21,15 @@ return new class extends Migration
             $table->string('quantity')->nullable();
             $table->decimal('rate', 10, 2)->nullable();
             $table->decimal('amount', 10, 2)->nullable();
+            $table->enum('payment_method', ['cash', 'bank'])->nullable();
+            $table->decimal('paid_amount', 10, 2)->nullable();
+            $table->decimal('remaining_amount', 10, 2)->nullable();
+            $table->foreignId( 'customer_id');
+            $table->foreignId( 'category_id');
+            $table->enum('status', ['cash', 'partial','paid','credit'])->default('unpaid');
             $table->timestamps();
         });
-        
+
     }
 
     /**

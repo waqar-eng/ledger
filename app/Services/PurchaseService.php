@@ -53,6 +53,12 @@ class PurchaseService extends BaseService implements PurchaseServiceInterface
             'amount'             => $data['amount'] ?? 0,
             'actual_quantity'    => $quantity,
             'predicted_quantity' => $predictedQuantity,
+            'customer_id' => $data['customer_id'],
+            'category_id' => $data['category_id'],
+            'payment_method'     => $data['payment_method'] ?? null,
+            'paid_amount'        => $data['paid_amount'] ?? 0,
+            'remaining_amount'   => $data['remaining_amount'] ?? 0,
+            'status'   => $data['payment_type'] ?? 'cash',
         ];
 
         return Purchase::create($purchaseData);
@@ -64,11 +70,11 @@ class PurchaseService extends BaseService implements PurchaseServiceInterface
         $actualQuantity   = $data['quantity'];
         $rate             = $data['rate'];
         $moisture         = $data['moisture'] ?? 0;
-        
+
         $predictedQuantity = $moisture > 0
         ? $actualQuantity - ($actualQuantity * ($moisture / 100))
         : $actualQuantity;
-        
+
         // return [$purchase, $ledgerId, $data, $predictedQuantity];
         $purchase->update([
             'moisture'           => $moisture,

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\AppEnum;
 use App\Models\AccountReceivable;
 use App\Models\CreditSale;
+use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -77,7 +78,7 @@ public function updateOrInsert(array $request, bool $isUpdate = false, ?int $old
         DB::transaction(function () use ($customerId, $paidAmount, $categoryId) {
             $remainingPayment = $paidAmount;
 
-            $creditSales = CreditSale::where('customer_id', $customerId)
+            $creditSales = Sale::where('customer_id', $customerId)
                 ->where('category_id', $categoryId)
                 ->where('remaining_amount', '>', 0)
                 ->orderBy('id', 'asc')
@@ -95,11 +96,13 @@ public function updateOrInsert(array $request, bool $isUpdate = false, ?int $old
                     // fully settle this sale
                     $remainingPayment -= $available;
                     $sale->remaining_amount = 0;
+                    $sale->paid_amount = $sale->amount;
                     $sale->status = AppEnum::Paid->value;
                     $sale->save();
                 } else {
                     // partial pay
                     $sale->remaining_amount = $available - $remainingPayment;
+                    $sale->paid_amount += $remainingPayment;
                     $sale->status = $sale->remaining_amount > 0 ? AppEnum::Partial->value : AppEnum::Paid->value;
                     $sale->save();
                     $remainingPayment = 0;

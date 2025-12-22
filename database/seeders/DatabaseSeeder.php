@@ -6,6 +6,7 @@ use App\AppSettingPeriod;
 use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\LedgerSeason;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -86,5 +87,14 @@ class DatabaseSeeder extends Seeder
             ['key' => 'updation_period'],
             ['value' => AppSettingPeriod::OneWeek->value]
         );
+        LedgerSeason::insert([
+            'name'=>'Default Season',
+            'description'=>'Default Season',
+            'status'=>'active',
+            'start_date'=>now(),
+            'end_date'=>now()->addMonths(6),
+            'created_at'=>now(),
+            'updated_at'=>now(),
+        ]);
     }
 }

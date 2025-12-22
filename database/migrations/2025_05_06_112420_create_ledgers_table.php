@@ -22,14 +22,14 @@ return new class extends Migration {
             $table->string('quantity')->nullable();
             $table->decimal('rate', 10, 2)->nullable();
             $table->foreignId(column: 'customer_id')->nullable();
-            $table->foreignId(column: 'user_id')->nullable();         
+            $table->foreignId(column: 'user_id')->nullable();
             $table->foreignId(column: 'category_id')->nullable();
-            $table->softDeletes();     
+            $table->softDeletes();
             $table->timestamps();
         });
-        
-        
-        
+
+
+
     }
 
     public function down(): void

@@ -19,7 +19,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:api',])->group(function () {
 
         Route::get('user-details',[UserController::class, 'userDetails']);
-        Route::get('/ledgers/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
+        Route::get('/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
         Route::get('/ledgers/reports', [LedgerController::class, 'report']);
         Route::get('ledgers/bill-number', [LedgerController::class, 'billNumber']);
 
