@@ -53,8 +53,8 @@ class LedgerController extends Controller
     {
         try {
             $user = $this->ledgerService->find($id);
-            return $this->success($user);
-            return $this->error(Ledger::UPDATE_RESTRICTED, 500);
+            return $user ? $this->success($user) : 
+            $this->error(Ledger::UPDATE_RESTRICTED, 500);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

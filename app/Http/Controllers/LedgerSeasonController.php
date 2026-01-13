@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LedgerSeasonRequest;
+use App\Http\Requests\SeasonSummaryRequest;
 use App\Models\LedgerSeason;
 use App\Services\Interfaces\LedgerSeasonServiceInterface;
 use App\Traits\ApiResponseTrait;
@@ -76,6 +77,15 @@ class LedgerSeasonController extends Controller
          try {
             $res=$this->ledgerSeasonService->delete($id);
             return $this->success($res, LedgerSeason::LEDGER_SEASON_DELETED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+    public function season_summaries(SeasonSummaryRequest $request, $season_id)
+    {
+         try {
+            $res=$this->ledgerSeasonService->season_summaries($season_id);
+            return $this->success($res, LedgerSeason::LEDGER_SEASON_SUMMARY);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

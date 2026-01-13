@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\Expense;
 use App\Models\Investment;
+use App\Models\LedgerSeason;
 use App\Models\Stock;
 use App\Services\Helpers\LedgerHelper;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +94,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function buildQuery(array $filters, $start_date, $end_date)
     {
-        return Ledger::with(['customer', 'user', 'category'])
+        $currentSeason= LedgerSeason::getActiveSeason();
+         if (!$currentSeason) {
+            throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
+        }
+        $query= Ledger::with(['customer', 'user', 'category'])
+        ->whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date])
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['customer_id']), fn($q) => $q->where('customer_id', $filters['customer_id']))
             ->when(!empty($filters['user_id']), fn($q) => $q->where('user_id', $filters['user_id']))
@@ -126,6 +132,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 });
             })
             ->orderByDesc('id');
+        return $query;
     }
 
     public function applyDateFilters($query, $start_date, $end_date)
@@ -224,12 +231,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public static function ledgerNewTotalAndType($request, $id = null)
     {
-        $query = Ledger::query();
+        $currentSeason= LedgerSeason::getActiveSeason();
+        $query = Ledger::whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date]);
         if ($id) {
             $query->where('id', '<', $id);
         }
 
-        $latestLedger = $query->latest()->first();
+        $latestLedger = $query->latest()->first() ? $query->latest()->first() : 0;
         $previousTotal = $latestLedger?->total_amount ?? 0;
         $ledgerType = $request['ledger_type'];
         $type = self::getLedgerType($ledgerType);
@@ -288,10 +296,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     public function getDashboardSummary(): array
     {
         $now = Carbon::now();
+        $season = LedgerSeason::getActiveSeason();
+        $start = $season->start_date ?? '';
+        $end   = $season->end_date ?? '';
 
-        $daily = Ledger::whereDate('created_at', $now->toDateString())->get();
-        $monthly = Ledger::whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->get();
-        $yearly = Ledger::whereYear('created_at', $now->year)->get();
+        $daily = Ledger::whereBetween('created_at', [$start, $end])->whereDate('created_at', $now->toDateString())->get();
+        $monthly = Ledger::whereBetween('created_at', [$start, $end])->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->get();
+        $yearly = Ledger::whereBetween('created_at', [$start, $end])->whereYear('created_at', $now->year)->get();
 
         $formatTotals = fn($collection) => [
             'sales' => $collection->where('ledger_type', 'sale')->sum('amount'),
@@ -449,6 +460,26 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         return DB::transaction(function () use ($request, $id) {
             $ledger = self::find($id);
+           $oldEffective = 
+                ($ledger->payment_type == AppEnum::Credit->value ||
+                $ledger->payment_type == AppEnum::Partial->value)
+                ? $ledger->paid_amount
+                : $ledger->amount;
+
+            $newEffective =
+                ($request['payment_type'] == AppEnum::Credit->value ||
+                $request['payment_type'] == AppEnum::Partial->value)
+                ? ($request['paid_amount'] ?? 0)
+                : ($request['amount']??0);
+
+            // Determine how much the change in this ledger affects future running totals.
+            // For sales/investments/received-payments the total increases forward in time (new - old).
+            // For purchases/expenses/payments the total decreases forward in time (old - new).
+            if (in_array($ledger->ledger_type, [AppEnum::Sale->value, AppEnum::Investment->value, AppEnum::ReceivePayment->value])) {
+                $delta = $newEffective - $oldEffective;
+            } else {
+                $delta = $oldEffective - $newEffective;
+            }
             if ($ledger->ledger_type == $request['ledger_type']) {
                 $request['payment_type'] = LedgerHelper::resolvePaymentType($request);
                 $typeAndNewTotal = self::ledgerNewTotalAndType($request, $ledger->id);
@@ -476,9 +507,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     case 'purchase':
                         LedgerHelper::adjustStockOnUpdate($ledger, $request);
                         $this->purchase_service->updateWithMoisture($ledger->id, $request);
-                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $request['amount']>0) {
+                        if(in_array($request['payment_type'], [AppEnum::Credit->value, AppEnum::Partial->value]) && $newEffective >0) {
                             $ledger->creditPurchase()->updateOrCreate(['ledger_id' => $ledger->id], $request);
-                            $this->account_payable_service->updateOrInsert($request, true);
+                            $requestWithEffective = $request;
+                            $requestWithEffective['amount'] = $newEffective;
+                            $this->account_payable_service->updateOrInsert($requestWithEffective, true);
                         }
                         $ledger->update($request);
                         break;
@@ -508,18 +541,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $ledger= $ledger->fresh();
                 RecalculateTotalsJob::dispatch(
                     \App\Models\Ledger::class,
-                    'type',
                     $ledger->id,
-                    [],
-                    $ledger->total_amount
+                    $delta
                 );
                 if (in_array($ledger->ledger_type, ['investment', 'withdraw'])) {
                             RecalculateTotalsJob::dispatch(
                                 \App\Models\Investment::class,
-                                'type',
                                 $ledger->investment?->id ?? 0,
-                                ['user_id' => $ledger->user_id],
-                                $newInvestment
+                                $delta
                             );
                     }
             }
@@ -534,6 +563,16 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             if ($ledger->id == Ledger::min('id')) {
                 throw new \Exception("You cannot delete the very first ledger (base investment).");
             }
+            // Compute effective amount for delta propagation
+            $effectiveAmount = 
+                ($ledger->payment_type == AppEnum::Credit->value || $ledger->payment_type == AppEnum::Partial->value)
+                ? ($ledger->paid_amount ?? 0)
+                : $ledger->amount;
+
+            // Delta = negative for credit-side, positive for debit-side
+            $delta = in_array($ledger->ledger_type, [AppEnum::Sale->value, AppEnum::Investment->value, AppEnum::ReceivePayment->value])
+                    ? -$effectiveAmount
+                    : $effectiveAmount;
             // Handle related record
             switch ($ledger->ledger_type) {
                 case 'sale':
@@ -566,22 +605,23 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 case 'receive-payment':
                     //  Reverse the receive-payment impact
                     $customerId = $ledger->customer_id;
-                    $paidAmount = $ledger->paid_amount ?? 0;
+                    // $paidAmount = $ledger->paid_amount ?? 0;
                     $categoryId = $ledger->category_id;
 
-                    if ($paidAmount > 0 && $customerId && $categoryId) {
+
+                    if ($customerId && $effectiveAmount && $categoryId) {
                         // Call restore() to return this amount to credit sales
-                        $this->account_receiveable_service->restore($customerId, $paidAmount, $categoryId);
+                        $this->account_receiveable_service->restore($customerId, $effectiveAmount, $categoryId);
                     }
                     break;
                 case 'payment':
                     $customerId = $ledger->customer_id;
-                    $paidAmount = $ledger->paid_amount ?? 0;
+                    // $paidAmount = $ledger->paid_amount ?? 0;
                     $categoryId = $ledger->category_id;
 
-                    if ($paidAmount > 0 && $customerId && $categoryId) {
+                    if ($customerId && $effectiveAmount && $categoryId) {
                         // Supplier payment deleted → restore payable balance
-                        $this->account_payable_service->restore($customerId, $paidAmount, $categoryId);
+                        $this->account_payable_service->restore($customerId, $effectiveAmount, $categoryId);
                     }
                     break;
                 case 'investment':
@@ -591,8 +631,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                     // Dispatch recalculation in queue
                     RecalculateTotalsJob::dispatch(
                         \App\Models\Investment::class,
-                        'type',
                         $invId ?? 0,
+                        -$effectiveAmount,
                         ['user_id' => $ledger->user_id]
                     );
                     break;
@@ -603,8 +643,8 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             // Dispatch recalculation for ledgers in queue
             RecalculateTotalsJob::dispatch(
                 \App\Models\Ledger::class,
-                'type',
-                $id
+                $id,
+                $delta
             );
             return true;
         });

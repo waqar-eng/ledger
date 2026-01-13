@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('season-search', [LedgerSeasonController::class, 'search']);
         Route::apiResource('ledger-seasons', LedgerSeasonController::class);
+        Route::get('season-summaries/{season_id}', [LedgerSeasonController::class, 'season_summaries']);
 
     });
 

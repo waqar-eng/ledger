@@ -22,7 +22,7 @@ class UserService extends BaseService implements UserServiceInterface
         if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){
             $user = Auth::user();
             if ($user instanceof \App\Models\User) {
-                return $user->createToken('API Token')->accessToken;
+                return ['token'=>$user->createToken('API Token')->accessToken, 'user'=>$user];
             }
         }
         else {

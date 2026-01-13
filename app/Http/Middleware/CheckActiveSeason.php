@@ -26,7 +26,7 @@ class CheckActiveSeason
 
         $active = LedgerSeason::where('status','active')->first();
         if(!$active){
-            return $this->error('No active season found. Please activate a season before creating ledger.', 403);
+            return $this->error(LedgerSeason::NO_ACTIVE_SEASON, 403);
         }
         return $next($request);
     }
