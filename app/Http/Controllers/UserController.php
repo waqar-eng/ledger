@@ -62,8 +62,7 @@ class UserController extends Controller
     {
         try {
             $this->authorizeModelAction('update', User::class, $id);
-            $request = $request->validated();
-            $user = $this->userService->update($request, $id);
+            $user = $this->userService->update($request->all(), $id);
             return $this->success($user, User::USER_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -95,7 +94,7 @@ class UserController extends Controller
         }
     }
 
-    
+
    public function userDetails(Request $request)
    {
     try {

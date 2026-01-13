@@ -26,7 +26,7 @@ class ExpenseRequest extends FormRequest
             'amount' => 'required|numeric|min:0',
             'type' => 'required|string|in:credit,debit',
             'date' => 'required|date',
-            'customer_id' => 'nullable|exists:customers,id',
+            'user_id' => 'nullable|exists:users,id',
             'ledger_type' => 'required|in:expense'
         ];
     }

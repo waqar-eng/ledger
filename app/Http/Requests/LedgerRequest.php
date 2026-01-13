@@ -32,25 +32,10 @@ class LedgerRequest extends FormRequest
             ],
             'date' => 'required|date',
             // Conditional validation
-            'customer_id' => [
-                'nullable',
-                'exists:customers,id',
-                'required_unless:ledger_type,withdraw,investment,expense,moisture_loss',
-                function ($attribute, $value, $fail) {
-                    if ($value && $this->user_id) {
-                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
-                    }
-                },
-            ],
             'user_id' => [
                 'nullable',
                 'exists:users,id',
-                'required_if:ledger_type,withdraw,investment',
-                function ($attribute, $value, $fail) {
-                    if ($value && $this->customer_id) {
-                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
-                    }
-                },
+                'required_unless:ledger_type,withdraw,investment,expense,moisture_loss',
             ],
 
             'category_id'         => [
@@ -96,7 +81,7 @@ class LedgerRequest extends FormRequest
         $getRules = [
             'start_date' => 'nullable|date|required_with:end_date',
             'end_date'   => 'nullable|date|required_with:start_date|after_or_equal:start_date',
-            'customer_id'  => 'nullable|integer|exists:customers,id',
+            'user_id'  => 'nullable|integer|exists:users,id',
             'search_term'  => 'nullable|string',
             'per_page'  => 'nullable|integer',
 
@@ -111,25 +96,10 @@ class LedgerRequest extends FormRequest
             ],
             'date' => 'required|date',
             // Conditional validation
-            'customer_id' => [
-                'nullable',
-                'exists:customers,id',
-                'required_unless:ledger_type,withdraw,investment,expense,moisture_loss',
-                function ($attribute, $value, $fail) {
-                    if ($value && $this->user_id) {
-                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
-                    }
-                },
-            ],
             'user_id' => [
                 'nullable',
                 'exists:users,id',
-                'required_if:ledger_type,withdraw,investment',
-                function ($attribute, $value, $fail) {
-                    if ($value && $this->customer_id) {
-                        $fail(Ledger::USER_AND_CUSTOMER_ERROR);
-                    }
-                },
+                'required_unless:ledger_type,withdraw,investment,expense,moisture_loss',
             ],
 
             'category_id'         => [
@@ -182,20 +152,6 @@ class LedgerRequest extends FormRequest
                 return $idRule;
             default:
                 return $getRules;
-        }
-    }
-    protected function passedValidation()
-    {
-        // Only run on create or update
-        if (!in_array($this->method(), ['POST', 'PUT', 'PATCH'])) {
-            return;
-        }
-
-        try {
-            LedgerService::ledgerNewTotalAndType($this->all(), $this->id);
-        } catch (ValidationException $e) {
-            // rethrow to stop validation and send proper error response
-            throw $e;
         }
     }
 }

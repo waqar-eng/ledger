@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('account_payables', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id');
+            $table->foreignId('user_id');
             $table->foreignId('category_id');
             $table->decimal('balance', 15, 2)->default(0);
-
             $table->timestamps();
 
-            $table->unique(['customer_id', 'category_id'], 'unique_customer_category');
+            $table->unique(['user_id', 'category_id'], 'unique_user_category');
         });
     }
 

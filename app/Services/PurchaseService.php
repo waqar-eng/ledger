@@ -23,7 +23,7 @@ class PurchaseService extends BaseService implements PurchaseServiceInterface
     {
 
 
-        $query = Purchase::with(['ledger', 'ledger.customer']);
+        $query = Purchase::with(['ledger', 'ledger.user']);
 
         if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
 
@@ -46,14 +46,9 @@ class PurchaseService extends BaseService implements PurchaseServiceInterface
         $quantity = $data['quantity']??0;
         $predictedQuantity = $quantity * (1 - $moisture / 100);
 
-        $purchaseData = [
-            'ledger_id'          => $data['ledger_id'],
-            'moisture'           => $moisture,
-            'rate'               => $data['rate'],
-            'amount'             => $data['amount'] ?? 0,
-            'actual_quantity'    => $quantity,
-            'predicted_quantity' => $predictedQuantity,
-        ];
+        $purchaseData = array_merge($data, [
+        'predicted_quantity' => $predictedQuantity ?? 0,
+        ]);
 
         return Purchase::create($purchaseData);
     }
@@ -64,16 +59,18 @@ class PurchaseService extends BaseService implements PurchaseServiceInterface
         $actualQuantity   = $data['quantity'];
         $rate             = $data['rate'];
         $moisture         = $data['moisture'] ?? 0;
-        
+
         $predictedQuantity = $moisture > 0
         ? $actualQuantity - ($actualQuantity * ($moisture / 100))
         : $actualQuantity;
-        
+
         // return [$purchase, $ledgerId, $data, $predictedQuantity];
         $purchase->update([
             'moisture'           => $moisture,
             'rate'               => $rate,
             'amount'             => $data['amount'] ?? 0,
+            'paid_amount'        => $data['paid_amount'] ?? 0,
+            'remaining_amount'   => $data['remaining_amount'] ?? 0,
             'actual_quantity'    => $actualQuantity,
             'predicted_quantity' => $predictedQuantity,
         ]);

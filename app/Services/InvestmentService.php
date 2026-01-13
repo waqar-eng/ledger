@@ -18,7 +18,7 @@ class InvestmentService extends BaseService implements InvestmentServiceInterfac
     }
     public function create($request)
     {
-        $amount = $request['amount']; 
+        $amount = $request['amount'];
         $type = $request['type']; // withdrawal, additional, opening
 
         //Step 1: Get previous total from Ledger
@@ -53,7 +53,7 @@ class InvestmentService extends BaseService implements InvestmentServiceInterfac
         ];
         $investment = $this->repository->create($commonData);
 
-        
+
 
         //Step 4: Then create Ledger entry
         Ledger::create([
@@ -63,7 +63,7 @@ class InvestmentService extends BaseService implements InvestmentServiceInterfac
             'ledgerable_id' => $investment->id,
             'ledgerable_type' => Investment::class,
             'description' => $type ?? '',
-            'customer_id' => $request['customer_id'] ?? null,
+            'user_id' => $request['user_id'] ?? null,
         ]);
 
         return $investment;

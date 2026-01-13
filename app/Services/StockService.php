@@ -7,6 +7,7 @@ use App\Constants\AppConstants;
 use App\Models\Stock;
 use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Services\Interfaces\StockServiceInterface;
+use Illuminate\Support\Facades\Log;
 
 class StockService extends BaseService implements StockServiceInterface
 {
@@ -46,6 +47,13 @@ class StockService extends BaseService implements StockServiceInterface
         }
         return $lastQuantity;
 
+    }
+    public function updateStockByDelta(int $categoryId, float $delta): void
+    {
+
+        $stock = Stock::where('category_id', $categoryId )->first();
+
+        $stock->increment('total_quantity', $delta);
     }
 
     public function updateStock(array $data, $lastQuantity)

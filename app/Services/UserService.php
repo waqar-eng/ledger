@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-
+use App\Models\LedgerSeason;
 use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Services\Interfaces\UserServiceInterface;
@@ -34,29 +34,43 @@ class UserService extends BaseService implements UserServiceInterface
     {
         $perPage = $filters['per_page'] ?? 10;
         $search = $filters['search'] ?? '';
+        $season = LedgerSeason::getActiveSeason();
+        $start = $season->start_date ?? '';
+        $end   = $season->end_date ?? '';
 
-        return User::query()
+        $query = User::with([
+            'accountReceivables' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            'accountPayables' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            'ledgers' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            'sales.ledger' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            'purchases.ledger' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            'expenses.ledger' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            ])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%")
-                    ->orWhere('user_type', 'like', "%$search%");
+                    ->orWhere('type', 'like', "%$search%");
                 });
-            })
-            ->orderByDesc('id')
-            ->paginate($perPage);
+            })->orderByDesc('id');
+        return $perPage ? $query->paginate($perPage) : $query->get();
    }
     public function AllUsers($filters)
     {
         $search = $filters['search'] ?? '';
-
-        return User::query()
+        $season = LedgerSeason::getActiveSeason();
+        $start = $season->start_date ?? '';
+        $end   = $season->end_date ?? '';
+        return User::with([
+            'accountReceivables' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            'accountPayables' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+            ])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%")
-                    ->orWhere('user_type', 'like', "%$search%");
+                    ->orWhere('type', 'like', "%$search%");
 
                 });
             })

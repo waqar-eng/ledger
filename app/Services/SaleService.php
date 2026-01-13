@@ -25,7 +25,7 @@ class SaleService extends BaseService implements SaleServiceInterface
     {
 
 
-        $query = Sale::with(['ledger', 'ledger.customer']);
+        $query = Sale::with(['ledger', 'ledger.user']);
 
         if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
             $start = \Carbon\Carbon::parse($filters['start_date'])->toDateString();
