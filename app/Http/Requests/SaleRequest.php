@@ -26,7 +26,7 @@ class SaleRequest extends FormRequest
             'amount' => 'required|numeric|min:0',
             'type' => 'required|string|in:credit,debit',
             'date' => 'required|date',
-            'customer_id' => 'required|exists:customers,id',
+            'user_id' => 'required|exists:users,id',
             'ledger_type' => 'required|in:sale'
         ];
     }

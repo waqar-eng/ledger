@@ -19,13 +19,18 @@ return new class extends Migration
             $table->foreignId(column: 'ledger_id')->constrained('ledgers')
             ->onDelete('cascade')->nullable();
 
-            $table->foreignId(column: 'category_id')->constrained('categories')
-            ->onDelete('cascade')->nullable();
+            $table->foreignId(column: 'category_id')->nullable()->constrained('categories')
+            ->onDelete('cascade');
 
             $table->enum('type', ['investment', 'withdraw']);
             $table->integer('amount');
             $table->decimal('total_amount', 15, 2)->nullable();
             $table->date('date')->default(now());
+
+            $table->foreignId('parent_id')->nullable()
+            ->constrained('investments')->nullOnDelete();
+
+            $table->softDeletes();
             $table->timestamps();
         });
     }

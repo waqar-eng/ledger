@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Investment extends Model
 {
-    protected $fillable = ['ledger_id','user_id', 'type', 'amount', 'total_amount', 'date'];
+    use SoftDeletes;
+    protected $fillable = ['ledger_id','user_id', 'type', 'amount', 'total_amount', 'date','category_id', 'parent_id'];
 
     public function user()
     {
@@ -19,6 +21,15 @@ class Investment extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+    public function parent()
+    {
+        return $this->belongsTo(Investment::class, 'parent_id');
+    }
+
+    public function adjustments()
+    {
+        return $this->hasMany(Investment::class, 'parent_id');
     }
 
     public const INVESTMENT_SAVE_SUCCESS= "Investment sotred successfully";

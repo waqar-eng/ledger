@@ -12,25 +12,19 @@ class AccountReceivable extends Model
 
     protected $hidden = ['updated_at'];
     protected $fillable = [
-        'customer_id',
+        'user_id',
         'category_id',
         'balance',
     ];
 
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class);
     }
 
     public function category()
     {
         return $this->belongsTo(Category::class);
-    }
-
-    public function creditSales()
-    {
-        return $this->hasMany(CreditSale::class, 'category_id', 'category_id')
-            ->where('customer_id', $this->customer_id);
     }
 
 }

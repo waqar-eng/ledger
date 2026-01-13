@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\AppEnum;
 use App\Models\payment;
 use Illuminate\Support\Facades\DB;
 
@@ -15,14 +14,12 @@ public function insert(array $request): void
 
             payment::create([
                 'ledger_id'   => $request['ledger_id'] ?? null,
-                'customer_id' => $request['customer_id'] ?? null,
+                'user_id' => $request['user_id'] ?? null,
                 'category_id' => $request['category_id'] ?? null,
                 'amount'      => $request['amount'] ?? 0,
                 'paid_amount'      => $request['paid_amount'] ?? 0,
                 'remaining_amount'      => $request['remaining_amount'] ?? 0,
-                'direction'   => $request['ledger_type'] === 'receive-payment'
-                                    ? 'receive'
-                                    : 'pay',
+                'direction'   => $request['ledger_type'] === 'receive-payment' ? 'receive' : 'pay',
             ]);
         }
     });

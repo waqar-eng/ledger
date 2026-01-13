@@ -3,22 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends Model
 {
-    protected $fillable = ['ledger_id','amount', 'loss_quantity', 'rate', 'customer_id', 'category_id',];
+    use SoftDeletes;
+    protected $fillable = ['ledger_id','amount', 'loss_quantity', 'rate', 'parent_id',];
     protected $hidden = ['deleted_at', 'updated_at'];
     public function ledger()
     {
         return $this->belongsTo(Ledger::class);
     }
-    public function customer()
+    public function adjustments()
     {
-        return $this->belongsTo(Customer::class);
-    }
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
+        return $this->hasMany(Expense::class, 'parent_id');
     }
 
    public const EXPENSE_CREATED = 'Expense created successfully';

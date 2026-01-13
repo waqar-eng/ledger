@@ -22,10 +22,20 @@ class Customer extends Model
         'type',
     ];
     protected $hidden = ['deleted_at', 'updated_at'];
-    public function ledgers()
+    public function purchases()
     {
-        return $this->hasMany(Ledger::class);
+        return $this->hasMany(Purchase::class);
     }
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+
 
     public function accountReceivables()
     {

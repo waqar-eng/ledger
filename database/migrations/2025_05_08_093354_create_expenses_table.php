@@ -17,8 +17,9 @@ return new class extends Migration
             $table->decimal('amount', 15, 2)->nullable();
             $table->decimal('loss_quantity', 10, 2)->nullable();
             $table->decimal('rate', 10, 2)->nullable();
-            $table->foreignId(column: 'customer_id')->nullable();
-            $table->foreignId(column: 'category_id')->nullable();
+            $table->foreignId('parent_id')->nullable()
+            ->constrained('expenses')->nullOnDelete();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

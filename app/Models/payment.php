@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class payment extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'ledger_id',
-        'customer_id',
+        'parent_id',
+        'user_id',
         'category_id',
         'amount',
         'paid_amount',
@@ -21,12 +24,16 @@ class payment extends Model
         return $this->belongsTo(Ledger::class);
     }
 
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class);
     }
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+    public function adjustments()
+    {
+        return $this->hasMany(payment::class, 'parent_id');
     }
 }

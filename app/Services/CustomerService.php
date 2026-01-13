@@ -31,15 +31,11 @@ class CustomerService extends BaseService implements CustomerServiceInterface
     $start = $season->start_date ?? '';
     $end   = $season->end_date ?? '';
     $query = Customer::with([
-            'ledgers' => function ($q) use ($start, $end) {
-                $q->whereBetween('created_at', [$start, $end]);
-            },
-            'accountReceivables' => function ($q) use ($start, $end) {
-                $q->whereBetween('created_at', [$start, $end]);
-            },
-            'accountPayables' => function ($q) use ($start, $end) {
-                $q->whereBetween('created_at', [$start, $end]);
-            },
+            'accountReceivables' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+    'accountPayables' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+    'sales.ledger' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+    'purchases.ledger' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
+    'expenses.ledger' => fn($q) => $q->whereBetween('created_at', [$start, $end]),
         ])
         ->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {

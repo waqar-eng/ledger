@@ -17,32 +17,22 @@ class Ledger extends Model
      */
     protected $fillable = [
         'description',
-        // 'amount',
         'type',
         'date',
-        // 'customer_id',
-        // 'category_id',
-        // 'user_id',
         'ledger_type',
         'total_amount',
-        // 'payment_type',
-        // 'payment_method',
-        // 'paid_amount',
-        // 'remaining_amount',
-        // 'quantity',
-        // 'rate',
-        'bill_no'
-
+        'amount',
+        'payment_method',
+        'bill_no',
+        'user_id',
+        'category_id',
+        'parent_id'
     ];
     protected $casts = [
         'amount' => 'float',
         'total_amount' => 'float', // if needed
     ];
     protected $hidden = ['deleted_at', 'updated_at'];
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
     public function investment()
     {
         return $this->hasOne(Investment::class);
@@ -70,14 +60,6 @@ class Ledger extends Model
     {
         return $this->hasOne(Sale::class);
     }
-    public function creditSale()
-    {
-        return $this->hasOne(CreditSale::class);
-    }
-    public function creditPurchase()
-    {
-        return $this->hasOne(CreditPurchase::class);
-    }
 
 public function purchase()
 {
@@ -96,7 +78,15 @@ public function payment()
 {
     return $this->hasOne(Payment::class);
 }
+public function parent()
+{
+    return $this->belongsTo(Ledger::class, 'parent_id');
+}
 
+public function adjustments()
+{
+    return $this->hasMany(Ledger::class, 'parent_id');
+}
 public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transaction";
 
 public const LEDGER_CREATED= "Ledger created successfully";

@@ -14,12 +14,15 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ledger_id')->constrained('ledgers')->cascadeOnDelete();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade')->nullable();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->nullable();
             $table->foreignId( 'category_id')->constrained('categories')->onDelete('cascade')->nullable();
             $table->decimal('amount', 15, 2);
             $table->decimal('paid_amount', 15, 2);
             $table->decimal('remaining_amount', 15, 2);
             $table->enum('direction', ['receive', 'pay']);
+            $table->foreignId('parent_id')->nullable()
+            ->constrained('payments')->nullOnDelete();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

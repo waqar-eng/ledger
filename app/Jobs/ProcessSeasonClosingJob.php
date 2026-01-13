@@ -65,12 +65,12 @@ class ProcessSeasonClosingJob implements ShouldQueue
         ->whereBetween('created_at', [$start, $end])
         ->get()->filter(fn($p) => $p->total_quantity != 0);
 
-        $payables = AccountPayable::with('customer', 'category')->select('category_id', 'customer_id', 'balance')
+        $payables = AccountPayable::with('user', 'category')->select('category_id', 'user_id', 'balance')
         ->whereBetween('created_at', [$start, $end])
         ->get()->filter(fn($p) => $p->balance != 0);
 
-        
-        $receivables = AccountReceivable::with('customer', 'category')->select('category_id', 'customer_id', 'balance')
+
+        $receivables = AccountReceivable::with('user', 'category')->select('category_id', 'user_id', 'balance')
         ->whereBetween('created_at', [$start, $end])
         ->get()->filter(fn($p) => $p->balance != 0);
 
@@ -92,7 +92,7 @@ class ProcessSeasonClosingJob implements ShouldQueue
                 'total_expenses' => $totalExpenses,
                 'total_investment' => $totalInvestment,
                 'profit' => $profit,
-                
+
                 'remaining_stock' => json_encode($remainingStock->values()),
                 'total_payables' => json_encode($payables->values()),
                 'total_receivables' => json_encode($receivables->values()),

@@ -3,23 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
-    protected $fillable = ['ledger_id','quantity', 'rate', 'amount', 'payment_method', 'paid_amount', 'remaining_amount', 'customer_id', 'category_id', 'status'];
+    use SoftDeletes;
+    protected $fillable = ['ledger_id','quantity', 'rate', 'amount','parent_id'];
 
     protected $hidden = ['deleted_at', 'updated_at'];
     public function ledger()
     {
         return $this->belongsTo(Ledger::class);
     }
-     public function customer()
+     public function user()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class);
     }
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+    public function adjustments()
+    {
+        return $this->hasMany(Sale::class, 'parent_id');
     }
 
    public const SALE_CREATED = 'Sale created successfully';

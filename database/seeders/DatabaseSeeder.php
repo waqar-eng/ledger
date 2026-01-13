@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\AppSettingPeriod;
 use App\Models\AppSetting;
 use App\Models\Category;
-use App\Models\Customer;
 use App\Models\LedgerSeason;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -19,27 +18,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Users
-        $users = [
-            [
-                'name' => 'Admin User',
-                'email' => 'admin@zee.com',
-                'user_type'=> 'owner',
-                'password' => Hash::make('admin@zee$#1'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Investor User',
-                'email' => 'user@zee.com',
-                'user_type'=> 'investor',
-                'password' => Hash::make('112233'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ];
-        User::insert($users);
-
           // Categories
         $categories = [
             ['categoryName' => 'Kapas', 'created_at' => now(),'updated_at' => now()],
@@ -50,11 +28,32 @@ class DatabaseSeeder extends Seeder
         // cutomers
         $cutomers = [
             [
+                'name' => 'Admin User',
+                'email' => 'admin@zee.com',
+                'phone_number' => '03001034577',
+                'address'=>"admin address",
+                'type'=> 'owner',
+                'password' => Hash::make('admin@zee$#1'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Investor User',
+                'email' => 'user@zee.com',
+                'phone_number' => '03001034587',
+                'address'=>"investor address",
+                'type'=> 'investor',
+                'password' => Hash::make('112233'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
                 'name' => 'Walk-in buyer',
                 'email' => 'walk-in-buyer@gmail.com',
                 'phone_number' => '03001034567',
                 'address'=>"walkinbuyer",
                 'type'=>"buyer",
+                'password' => Hash::make('112233'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -64,6 +63,7 @@ class DatabaseSeeder extends Seeder
                 'phone_number' => '03001134567',
                 'address'=>"walkinsupplier",
                 'type'=>"supplier",
+                'password' => Hash::make('112233'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -73,11 +73,12 @@ class DatabaseSeeder extends Seeder
                 'phone_number' => '03001234567',
                 'address'=>"other city",
                 'type'=>"other",
+                'password' => Hash::make('112233'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
         ];
-        Customer::insert($cutomers);
+        User::insert($cutomers);
         // app settings
         AppSetting::updateOrCreate(
             ['key' => 'deletion_period'],

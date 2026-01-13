@@ -23,10 +23,10 @@ use App\Services\Interfaces\LedgerServiceInterface;
 use App\Services\LedgerService;
 
 // Customer bindings
-use App\Services\Interfaces\CustomerServiceInterface;
-use App\Services\CustomerService;
-use App\Repositories\Interfaces\CustomerRepositoryInterface;
-use App\Repositories\CustomerRepository;
+// use App\Services\Interfaces\CustomerServiceInterface;
+// use App\Services\CustomerService;
+// use App\Repositories\Interfaces\CustomerRepositoryInterface;
+// use App\Repositories\CustomerRepository;
 
 // Sale bindings
 use App\Services\Interfaces\SaleServiceInterface;
@@ -88,8 +88,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LedgerServiceInterface::class, LedgerService::class);
 
         // Customer
-        $this->app->bind(CustomerServiceInterface::class, CustomerService::class);
-        $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
+        // $this->app->bind(CustomerServiceInterface::class, CustomerService::class);
+        // $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
 
         // Sale
         $this->app->bind(SaleServiceInterface::class, SaleService::class);

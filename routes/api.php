@@ -28,7 +28,7 @@ Route::prefix('v1')->group(function () {
         });
         Route::resource('users', UserController::class);
         Route::get('all-users', [UserController::class,'AllUsers']);
-        Route::resource('customers', CustomerController::class);
+        // Route::resource('customers', CustomerController::class);
          Route::apiResource('sales', SaleController::class);
         // Route::apiResource('purchases', PurchaseController::class);
         // Route::apiResource('expenses', ExpenseController::class);

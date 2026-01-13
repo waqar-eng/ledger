@@ -21,7 +21,7 @@ class ExpenseService extends BaseService implements ExpenseServiceInterface
     {
 
 
-        $query = Expense::with(['ledger', 'ledger.customer']);
+        $query = Expense::with(['ledger', 'ledger.user']);
 
         if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
 
