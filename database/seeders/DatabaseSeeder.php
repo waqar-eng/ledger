@@ -68,8 +68,8 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Other Customer',
-                'email' => 'other@customer.com',
+                'name' => 'Other User',
+                'email' => 'other@user.com',
                 'phone_number' => '03001234567',
                 'address'=>"other city",
                 'type'=>"other",

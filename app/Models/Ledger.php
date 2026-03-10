@@ -98,5 +98,6 @@ public const BILL_NUMBER_SUCCESS= "Bill number created successfully";
 public const REPORT_SUCCESS= "Reports fetched successfully";
 public const LEDGER_DELETION_ERROR= "You can only delete record created within the allowed period.";
 public const LEDGER_UPDATION_ERROR= "You can only update record created within the allowed period.";
-public const USER_AND_CUSTOMER_ERROR= "Customer & user not allowed at the same time, refresh the page.";
+public const WALK_IN_BUYER_ACCOUNT_ERROR= "Remaining amount is not allowed for walk-in buyer";
+public const WALK_IN_SUPPLIER_ACCOUNT_ERROR= "Remaining amount is not allowed for walk-in supplier";
 }

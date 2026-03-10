@@ -5,22 +5,41 @@ namespace App\Services\Helpers;
 use App\AppEnum;
 use App\Models\Investment;
 use App\Models\Ledger;
+use App\Services\AccountPayableService;
+use App\Services\AccountReceiveableService;
+use App\Services\PaymentService;
+use App\Services\PurchaseService;
+use App\Services\ReportService;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class LedgerHelper
 {
+    public function __construct(
+    private StockService $stock_service,
+    private AccountReceiveableService $account_receiveable_service,
+    private PaymentService $payment_service,
+    private AccountPayableService $account_payable_service,
+    private ReportService $report_service,
+    private PurchaseService $purchase_service,
+    )
+    {
+    }
     public static function adjustStockOnUpdate($ledger, $request)
     {
         $stockService = app(StockService::class);
         $oldQty = $ledger->quantity ?? 0;
         $currentStock = $stockService->checkStock($request,$oldQty);
-
-        return match ($request['ledger_type']) {
-            'sale', 'moisture_loss' => $stockService->updateStock($request, $currentStock + $oldQty),
-            'purchase' => $stockService->updateStock($request, $currentStock - $oldQty),
-            default => null,
+        if (in_array($request['ledger_type'], ['sale', 'moisture_loss'])) {
+            return $stockService->updateStock($request, $currentStock + $oldQty);}
+        if ($request['ledger_type'] === 'purchase') {
+            if (($currentStock + $request['quantity'])<0) {
+                throw new \Exception("Not enough stock available. Only {$currentStock} left.");
+            }
+            return $stockService->updateStock($request, $currentStock - $oldQty);
         };
+        return null;
     }
     public static function resolvePaymentType(array $request): string
     {
@@ -246,14 +265,6 @@ class LedgerHelper
             ? ($newEffective - $oldEffective)
             : ($oldEffective - $newEffective);
     }
-    public static function calculateNewTotal(Ledger $latest, Ledger $ledger, float $delta): float
-    {
-        return self::calculateReversalTotal(
-            $ledger->ledger_type,
-            $latest->total_amount,
-            $delta
-        );
-    }
     public static function createAdjustmentLedger(Ledger $ledger, float $amount, float $total)
     {
         return Ledger::create([
@@ -307,6 +318,208 @@ class LedgerHelper
             'date'           => now()->toDateString(),
         ]);
     }
+    public static function updateMetadataOnly(Ledger $ledger, array $request): void
+    {
+        $ledger->update([
+            'description'    => $request['description']    ?? $ledger->description,
+            'payment_method' => $request['payment_method'] ?? $ledger->payment_method,
+        ]);
+    }
+    public static function hasOwnershipChange(Ledger $ledger, array $request): bool
+    {
+        return
+            (isset($request['user_id']) && $request['user_id'] != $ledger->user_id)
+            || (isset($request['category_id']) && $request['category_id'] != $ledger->category_id);
+    }
+    public function migrateLedgerOwnership(Ledger $ledger, array $request): void
+    {
+        if ($ledger->adjustments()->exists()) {
+            throw new \Exception("Adjusted ledgers are not allowed to update their ownership.");
+        }
+        $oldUser     = $ledger->user_id;
+        $oldCategory = $ledger->category_id;
+
+        $newUser     = $request['user_id']     ?? $oldUser;
+        $newCategory = $request['category_id'] ?? $oldCategory;
+        $requestAmount = $request['amount'] ?? 0;
+        if ($oldCategory !== $newCategory) {
+            throw new \Exception("Category change is not allowed.");
+        }
+
+        switch ($ledger->ledger_type) {
+
+            case AppEnum::Sale->value:
+                $this->migrateSaleOwnership($ledger, $oldUser, $newUser, $oldCategory, $newCategory);
+                break;
+
+            case AppEnum::Purchase->value:
+                $this->migratePurchaseOwnership($ledger, $oldUser, $newUser, $oldCategory, $newCategory);
+                break;
+            case AppEnum::Withdraw->value:
+                $this->migrateWithdrawOwnership($ledger, $oldUser, $newUser, $oldCategory, $newCategory, $requestAmount);
+                break;
+            case AppEnum::Investment->value:
+                $this->migrateInvestmentOwnership($ledger, $oldUser, $newUser, $oldCategory, $newCategory);
+                break;
+            case AppEnum::Payment->value:
+                $this->migratePaymentOwnership($ledger, $oldUser, $newUser, $oldCategory, $newCategory);
+                break;
+            case AppEnum::ReceivePayment->value:
+                $this->migrateReceivePaymentOwnership($ledger, $oldUser, $newUser, $oldCategory, $newCategory);
+                break;
+        }
+        // Update base ledger AFTER reversals
+        $ledger->update([
+            'user_id'     => $newUser,
+        ]);
+    }
+    public function migrateSaleOwnership(Ledger $ledger,int $oldUser,int $newUser,int $oldCategory, int $newCategory): void
+    {
+        $sale = $ledger->sale;
+
+        $total = (float) $sale->quantity * $sale->rate;
+        $paid  = (float) $ledger->amount;
+        $remaining = $total - $paid;
+        /* | 1. RECEIVABLE: REMOVE FROM OLD USER */
+        if ($remaining > 0) {
+            $this->account_receiveable_service->checkAccountReceivable([
+                'category_id'=>$oldCategory,
+                'user_id'=>$oldUser,
+        ], $remaining);
+            $this->account_receiveable_service->updateOrInsert([
+                'user_id'     => $oldUser,
+                'category_id' => $oldCategory,
+                'amount'      => -$remaining,
+            ], true);
+        }
+
+        /* | 2. RECEIVABLE: ADD TO NEW USER  */
+        if ($remaining > 0) {
+            $this->account_receiveable_service->updateOrInsert([
+                'user_id'     => $newUser,
+                'category_id' => $oldCategory,
+                'amount'      => $remaining,
+            ], true);
+        }
+    }
+    public function migratePurchaseOwnership(Ledger $ledger,int $oldUser,int $newUser,int $oldCategory,int $newCategory): void
+    {
+        $purchase = $ledger->purchase;
+        $total = $purchase->quantity * $purchase->rate;
+        $paid  = $ledger->amount;
+        $remaining = $total - $paid;
+        if ($remaining > 0) {
+            $this->account_payable_service->checkAccountPayable([
+                    'category_id'=>$oldCategory,
+                    'user_id'=>$oldUser,
+            ], $remaining);
+            $this->account_payable_service->updateOrInsert([
+                'user_id'     => $oldUser,
+                'category_id' => $oldCategory,
+                'amount'      => -$remaining,
+            ], true);
+
+            $this->account_payable_service->updateOrInsert([
+                'user_id'     => $newUser,
+                'category_id' => $oldCategory,
+                'amount'      => $remaining,
+            ], true);
+        }
+    }
+    public function migrateWithdrawOwnership(Ledger $ledger,int $oldUser,int $newUser,int $oldCategory,int $newCategory, $requestAmount): void
+    {
+        if($oldUser==$newUser){
+            return;
+        }
+        $newUserLatestInvestment = Investment::where('user_id', $newUser)
+            ->latest('id')
+            ->first();
+        $availableBalance = $newUserLatestInvestment->total_amount ?? 0;
+        if ($availableBalance < $requestAmount) {
+            throw new \Exception('Insufficient balance to transfer ownership.');
+        }
+        $ledger->investment->update([
+            'user_id'=>$newUser,
+            'category_id'=>$oldCategory,
+            'total_amount' => $availableBalance - $requestAmount,
+        ]);
+    }
+    public function migrateInvestmentOwnership(Ledger $ledger,int $oldUser,int $newUser,int $oldCategory,int $newCategory): void
+    {
+        if($oldUser==$newUser){
+            return;
+        }
+        $investment = $ledger->investment;
+        $hasWithdraw = Investment::where('user_id', $investment->user_id)
+        ->where('type', 'withdraw')
+        ->where('id', '>', $investment->id)
+        ->exists();
+        if ($hasWithdraw) {
+            throw new \DomainException(
+                'Investment ownership cannot be changed after withdrawal.'
+            );
+        }
+        $investment->update([
+            'user_id'     => $newUser,
+            'category_id' => $oldCategory,
+        ]);
+    }
+    public function migratePaymentOwnership(Ledger $ledger,int $oldUser,int $newUser,int $oldCategory,int $newCategory): void
+    {
+        if($oldUser==$newUser){
+            return;
+        }
+        $payment = $ledger->payment;
+        $this->account_payable_service->checkAccountPayable([
+                'category_id'=>$oldCategory,
+                'user_id'=>$oldUser,
+        ], $payment->paid_amount);
+        $this->account_payable_service->updateOrInsert([
+                'user_id'     => $oldUser,
+                'category_id' => $oldCategory,
+                'amount'      => -$payment->paid_amount,
+            ], true);
+        $this->account_payable_service->checkAccountPayable([
+                'category_id'=>$newCategory,
+                'user_id'=>$newUser,
+        ], $payment->paid_amount);
+        $this->account_payable_service->updateOrInsert([
+                'user_id'     => $newUser,
+                'category_id' => $newCategory,
+                'amount'      => $payment->paid_amount*-1,
+            ], true);
+        $payment->update(['user_id'=>$newUser, 'category_id'=>$newCategory]);
+    }
+    public function migrateReceivePaymentOwnership(Ledger $ledger,int $oldUser,int $newUser,int $oldCategory,int $newCategory): void
+    {
+        if($oldUser==$newUser){
+            return;
+        }
+        $payment = $ledger->payment;
+        $this->account_receiveable_service->checkAccountReceivable([
+                'category_id'=>$oldCategory,
+                'user_id'=>$oldUser,
+        ], $payment->paid_amount);
+        $this->account_receiveable_service->updateOrInsert([
+                'user_id'     => $oldUser,
+                'category_id' => $oldCategory,
+                'amount'      => $payment->paid_amount,
+            ], true);
+        $this->account_receiveable_service->checkAccountReceivable([
+                'category_id'=>$newCategory,
+                'user_id'=>$newUser,
+        ], $payment->paid_amount);
+        $this->account_receiveable_service->updateOrInsert([
+                'user_id'     => $newUser,
+                'category_id' => $newCategory,
+                'amount'      => $payment->paid_amount*-1,
+            ], true);
+        $payment->update(['user_id'=>$newUser, 'category_id'=>$newCategory]);
+    }
+
+
+
+
 
 
 }

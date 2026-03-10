@@ -18,6 +18,7 @@ use App\Models\payment;
 use App\Models\Purchase;
 use App\Services\Helpers\LedgerHelper;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class LedgerService extends BaseService implements LedgerServiceInterface
@@ -30,6 +31,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     private AccountPayableService $account_payable_service,
     private ReportService $report_service,
     private PurchaseService $purchase_service,
+    private LedgerHelper $ledgerHelper,
     )
     {
         parent::__construct($repository);
@@ -393,13 +395,41 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public function find($id)
     {
-        return Ledger::where('id', $id)
-            ->with(['category','user','investment', 'sale', 'purchase', 'expense', 'payment'])->first();
+        $ledger= Ledger::where('id', $id)
+            ->with(['category','user','investment', 'investment.adjustments', 'sale','sale.adjustments', 'purchase','purchase.adjustments', 'expense', 'expense.adjustments', 'payment', 'payment.adjustments','adjustments'])->first();
+        // if($ledger->adjustments){
+        //     $ledgerAdjustmentAmount = $ledger->adjustments->sum('amount');
+        //     $ledger->amount = $ledger->amount + $ledgerAdjustmentAmount;
+
+        //     // 2. Sale final values
+        //     if ($ledger->ledger_type === AppEnum::Sale->value && $ledger->sale) {
+
+        //         $sale = $ledger->sale;
+
+        //         $saleAdjustmentQty = $sale->adjustments->sum('quantity');
+        //         $saleAdjustmentAmount = $sale->adjustments->sum('amount');
+
+        //         $sale->quantity = (float) $sale->quantity + $saleAdjustmentQty;
+        //         $sale->amount   = (float) $sale->amount + $saleAdjustmentAmount;
+
+        //         // rate remains unchanged
+        //         $sale->rate = (float) $sale->rate;
+        //     }
+        // }
+        return $ledger;
     }
     public function update($request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
             $ledger=self::find($id);
+            // | 1. METADATA UPDATE (ALWAYS Allowed to update decription and payment method only)
+            LedgerHelper::updateMetadataOnly($ledger, $request);
+            // | 2. OWNERSHIP UPDATE (update category and user)
+            if (LedgerHelper::hasOwnershipChange($ledger, $request)) {
+                $this->ledgerHelper->migrateLedgerOwnership($ledger, $request);
+                // return $ledger;
+            }
+            // | 3. FINANCIAL UPDATE (amount, paid, quantity, rate etc)
             $latestLedger = Ledger::latest()->first();
             $oldEffective = LedgerHelper::getEffectiveAmountFromLedger($ledger);
             $newEffective = $request['paid_amount'] ? $request['paid_amount'] : $request['amount'] ?? 0;

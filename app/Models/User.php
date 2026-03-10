@@ -96,10 +96,6 @@ class User extends Authenticatable
         return $this->hasMany(AccountPayable::class, 'user_id');
     }
 
-    public const CUSTOMER_CREATED ='Customer created successfully';
-    public const CUSTOMER_UPDATED ='Customer updated successfully';
-    public const CUSTOMER_DELETED ='Customer deleted successfully';
-
     public const LOGIN_SUCCESS="Login successfully";
     public const LOGIN_ERROR="Login un-successfully ";
     public const USER_CREATED='User created successfully';
