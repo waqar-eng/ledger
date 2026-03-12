@@ -11,15 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('account_receivables', function (Blueprint $table) {
+        Schema::create('expense_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id');
-            $table->foreignId('category_id');
-            $table->decimal('balance', 15, 2)->default(0);
+            $table->string('expenseTypeName');
             $table->timestamps();
-
-            $table->unique(['user_id', 'category_id'], 'unique_user_category_receivables');
-
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('accounts_receivables');
+        Schema::dropIfExists('expense_types');
     }
 };

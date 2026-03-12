@@ -33,7 +33,9 @@ use App\Services\Interfaces\ExpenseServiceInterface;
 use App\Services\ExpenseService;
 use App\Repositories\Interfaces\ExpenseRepositoryInterface;
 use App\Repositories\ExpenseRepository;
+use App\Repositories\ExpenseTypeRepository;
 use App\Repositories\Interfaces\AppSettingRepositoryInterface;
+use App\Repositories\Interfaces\ExpenseTypeRepositoryInterface;
 // Purchase bindings
 use App\Services\Interfaces\PurchaseServiceInterface;
 use App\Services\PurchaseService;
@@ -54,6 +56,10 @@ use App\Services\AppSettingService;
 use App\Services\CategoryService;
 use App\Services\Interfaces\AppSettingServiceInterface;
 use App\Services\Interfaces\CategoryServiceInterface;
+//expense-type
+use App\Services\Interfaces\ExpenseTypeServiceInterface;
+use App\Services\ExpenseTypeService;
+
 use App\Services\Interfaces\Log_activityServiceInterface;
 use App\Services\Interfaces\StockServiceInterface;
 use App\Services\LedgerSeasonService;
@@ -102,6 +108,9 @@ class AppServiceProvider extends ServiceProvider
         //category
         $this->app->bind(CategoryServiceInterface::class, CategoryService::class);
         $this->app->bind(CategoryRepositoryInterface::class , CategoryRepository::class);
+        //expense-type
+        $this->app->bind(ExpenseTypeServiceInterface::class, ExpenseTypeService::class);
+        $this->app->bind(ExpenseTypeRepositoryInterface::class , ExpenseTypeRepository::class);
 
         $this->app->bind(StockServiceInterface::class, StockService::class);
         $this->app->bind(StockRepositoryInterface::class , StockRepository::class);

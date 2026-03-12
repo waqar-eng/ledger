@@ -462,7 +462,6 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 // TOTAL sale value difference
                 $saleDeltaAmount = LedgerHelper::quantityRateDelta($oldQty,$oldRate,$newQty,$newRate);
             }
-
             $adjustmentAmount = 0;
             $hasPaidAmountChange =
                 array_key_exists('paid_amount', $request)
@@ -551,6 +550,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $adjustmentLedger->expense()->create([
                     'ledger_id'     => $adjustmentLedger->id,
                     'parent_id'     => $ledger->expense?->id,
+                    'expense_type_id'     => $ledger->expense?->expense_type_id,
                     'amount'        => $adjustmentAmount ?? 0,
                 ]);
                 break;

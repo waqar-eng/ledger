@@ -135,11 +135,7 @@ class LedgerHelper
     }
     public static function calculateTotalAmount(string $type, float $latest, float $amount): float
     {
-        return in_array($type, [
-            AppEnum::Sale->value,
-        ])
-            ? $latest - $amount
-            : $latest + $amount;
+        return  $latest + $amount;
     }
     public static function adjustedSum(Model $base, string $column)
     {

@@ -24,6 +24,7 @@ class LedgerRequest extends FormRequest
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'date' => 'required|date',
+            'expense_type_id' => ['nullable', 'integer', 'required_if:ledger_type,expense', 'exists:expense_types,id'],
             'category_id' => 'required|exists:categories,id',
             'ledger_type' => [ 'required', Rule::in(['sale','purchase','expense','investment','withdraw','receive-payment','payment','moisture_loss','other'])],
             'rate' => ['nullable','numeric', 'min:0', 'required_if:ledger_type,sale,purchase,moisture_loss',],
@@ -83,7 +84,7 @@ class LedgerRequest extends FormRequest
                     // Investment/withdraw → Investor or owner
                     if (in_array($ledgerType, ['withdraw', 'investment'])) {
                         if (!in_array($user->type, ['investor', 'owner'])) {
-                            $fail("For {$ledgerType}, the user must be a investor1. Selected: {$user->type}.");
+                            $fail("For {$ledgerType}, the user must be a investor. Selected: {$user->type}.");
                         }
                     }
                 },
