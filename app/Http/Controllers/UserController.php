@@ -51,7 +51,7 @@ class UserController extends Controller
     public function show($id)
     {
         try {
-            $user = $this->userService->find($id);
+            $user = $this->userService->show($id);
             return $this->success($user);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

@@ -10,13 +10,14 @@ use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StockController;
 
 Route::prefix('v1')->group(function () {
     //only login route public
     Route::post('/login', [UserController::class, 'login']);
 
-    Route::middleware(['auth:api',])->group(function () {
+    Route::middleware(['auth:api',"check_permission"])->group(function () {
 
         Route::get('user-details',[UserController::class, 'userDetails']);
         Route::get('/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
@@ -41,7 +42,7 @@ Route::prefix('v1')->group(function () {
         Route::get('season-search', [LedgerSeasonController::class, 'search']);
         Route::apiResource('ledger-seasons', LedgerSeasonController::class);
         Route::get('season-summaries/{season_id}', [LedgerSeasonController::class, 'season_summaries']);
-
+        Route::apiResource('roles', RoleController::class);
     });
 
 

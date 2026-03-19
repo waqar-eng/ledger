@@ -47,10 +47,12 @@ use App\Services\Interfaces\InvestmentServiceInterface;
 use App\Services\InvestmentService;
 use App\Repositories\Interfaces\InvestmentRepositoryInterface;
 use App\Repositories\Interfaces\Log_activityRepositoryInterface;
+use App\Repositories\Interfaces\RoleRepositoryInterface;
 use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Repositories\InvestmentRepository;
 use App\Repositories\LedgerSeasonRepository;
 use App\Repositories\Log_activityRepository;
+use App\Repositories\RoleRepository;
 use App\Repositories\StockRepository;
 use App\Services\AppSettingService;
 use App\Services\CategoryService;
@@ -61,9 +63,11 @@ use App\Services\Interfaces\ExpenseTypeServiceInterface;
 use App\Services\ExpenseTypeService;
 
 use App\Services\Interfaces\Log_activityServiceInterface;
+use App\Services\Interfaces\RoleServiceInterface;
 use App\Services\Interfaces\StockServiceInterface;
 use App\Services\LedgerSeasonService;
 use App\Services\Log_activityService;
+use App\Services\RoleService;
 use App\Services\StockService;
 use Illuminate\Support\Facades\Gate;
 
@@ -86,6 +90,10 @@ class AppServiceProvider extends ServiceProvider
         // Ledger
         $this->app->bind(LedgerRepositoryInterface::class, LedgerRepository::class);
         $this->app->bind(LedgerServiceInterface::class, LedgerService::class);
+
+        //role
+        $this->app->bind(RoleServiceInterface::class, RoleService::class);
+        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
 
         // Sale
         $this->app->bind(SaleServiceInterface::class, SaleService::class);

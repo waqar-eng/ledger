@@ -8,5 +8,6 @@ interface UserServiceInterface extends BaseServiceInterface
     public function findAll(array $filters);
     public function AllUsers(array $filters);
     public function update($request, $id);
+    public function show($id);
     public function userDetail($request);
 }

@@ -9,10 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, LogsActivity, HasApiTokens, SoftDeletes;
+    use HasRoles,HasFactory, Notifiable, LogsActivity, HasApiTokens, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -21,8 +22,9 @@ class User extends Authenticatable
         'address',
         'type',
         'password',
+        'role_id'
     ];
-
+    protected $guard_name = 'api';
     protected $hidden = [
         'password',
         'remember_token',
