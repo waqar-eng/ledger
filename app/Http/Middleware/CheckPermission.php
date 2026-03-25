@@ -13,10 +13,6 @@ class CheckPermission
     {
         $user = auth()->user();
 
-        if ($user && $user->hasRole('super-admin')) {
-            return $next($request);
-        }
-
         if (!$user) {
             return $this->error('Unauthorized', 401);
         }

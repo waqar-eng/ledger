@@ -105,4 +105,5 @@ class User extends Authenticatable
     public const USER_DELETED="User deleted successfully";
     public const USERS_FETCHED="User details fetched successfully";
     public const USERS_FETCHED_ERROR="Error fetching user details";
+    public const USER_PERMISSIONS="User permissions fetch successfully";
 }

@@ -33,7 +33,23 @@ class UserService extends BaseService implements UserServiceInterface
            return false;
         }
     }
+    public function userRolesPermissions()
+    {
+        $user = auth()->user()->load('roles.permissions');
 
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'type' => $user->type,
+
+            // roles
+            'roles' => $user->roles->pluck('name'),
+
+            // permissions (from roles)
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+        ];
+    }
     public function findAll(array $filters)
     {
         $perPage = $filters['per_page'] ?? 10;

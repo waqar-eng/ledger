@@ -21,25 +21,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-          // Categories
-        // $categories = [
-        //     ['categoryName' => 'Kapas', 'created_at' => now(),'updated_at' => now()],
-        //     ['categoryName' => 'Makai', 'created_at' => now(),'updated_at' => now()],
-        // ];
-        // Category::insert($categories);
+        // Categories
+        $categories = [
+            ['categoryName' => 'Kapas', 'created_at' => now(),'updated_at' => now()],
+            ['categoryName' => 'Makai', 'created_at' => now(),'updated_at' => now()],
+        ];
+        Category::insert($categories);
         // ✅ Create Permissions
         $permissions = [
             // Dashboard
+            'read dashboard',
             'dashboardSummary ledger',
-            
+
             // User
+            'read user',
             'index user',
             'create user',
             'update user',
             'destroy user',
-            'AllUsers',
+            'AllUsers user',
+            'getUserRolesPermissions user',
 
             // Role
+            'read role',
             'index role',
             'create role',
             'update role',
@@ -47,12 +51,14 @@ class DatabaseSeeder extends Seeder
             'manage role',
 
             // Ledger
+            'read ledger',
             'index ledger',
             'create ledger',
             'update ledger',
             'destroy ledger',
 
             // Ledger Season
+            'read ledger season',
             'index ledger season',
             'create ledger season',
             'update ledger season',
@@ -60,46 +66,54 @@ class DatabaseSeeder extends Seeder
             'view ledger season summary',
 
             // Sale
+            'read sale',
             'index sale',
             'create sale',
             'update sale',
             'destroy sale',
 
             // Purchase
+            'read purchase',
             'index purchase',
             'create purchase',
             'update purchase',
             'destroy purchase',
 
             // Investment
+            'read investment',
             'index investment',
             'create investment',
             'update investment',
             'destroy investment',
 
             // Category
+            'read category',
             'index category',
             'create category',
             'update category',
             'destroy category',
 
             // Expense Type
+            'read expense type',
             'index expense type',
             'create expense type',
             'update expense type',
             'destroy expense type',
 
             // Activity Log
+            'read activity log',
             'index activity log',
             'destroy activity log',
 
             // App Setting
+            'read app setting',
             'index app setting',
             'create app setting',
             'update app setting',
             'destroy app setting',
 
             // Expense
+            'read expense',
             'index expense',
             'create expense',
             'update expense',
@@ -111,79 +125,80 @@ class DatabaseSeeder extends Seeder
         }
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'api']);
         $superAdmin->givePermissionTo(Permission::all());
+        // cutomers
+        $cutomers = [
+            [
+                'name' => 'Admin User',
+                'email' => 'admin@zee.com',
+                'phone_number' => '03001034577',
+                'address'=>"admin address",
+                'type'=> 'owner',
+                'password' => Hash::make('admin@zee$#1'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Investor User',
+                'email' => 'user@zee.com',
+                'phone_number' => '03001034587',
+                'address'=>"investor address",
+                'type'=> 'investor',
+                'password' => Hash::make('112233'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Walk-in buyer',
+                'email' => 'walk-in-buyer@gmail.com',
+                'phone_number' => '03001034567',
+                'address'=>"walkinbuyer",
+                'type'=>"buyer",
+                'password' => Hash::make('112233'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Walk-in supplier',
+                'email' => 'walk-in-supplier@gmail.com',
+                'phone_number' => '03001134567',
+                'address'=>"walkinsupplier",
+                'type'=>"supplier",
+                'password' => Hash::make('112233'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Other User',
+                'email' => 'other@user.com',
+                'phone_number' => '03001234567',
+                'address'=>"other city",
+                'type'=>"other",
+                'password' => Hash::make('112233'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ];
+        User::insert($cutomers);
+        
         $adminUser = User::where('email', 'admin@zee.com')->first();
         $adminUser->assignRole('Super Admin');
-        // cutomers
-        // $cutomers = [
-        //     [
-        //         'name' => 'Admin User',
-        //         'email' => 'admin@zee.com',
-        //         'phone_number' => '03001034577',
-        //         'address'=>"admin address",
-        //         'type'=> 'owner',
-        //         'password' => Hash::make('admin@zee$#1'),
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        //     [
-        //         'name' => 'Investor User',
-        //         'email' => 'user@zee.com',
-        //         'phone_number' => '03001034587',
-        //         'address'=>"investor address",
-        //         'type'=> 'investor',
-        //         'password' => Hash::make('112233'),
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        //     [
-        //         'name' => 'Walk-in buyer',
-        //         'email' => 'walk-in-buyer@gmail.com',
-        //         'phone_number' => '03001034567',
-        //         'address'=>"walkinbuyer",
-        //         'type'=>"buyer",
-        //         'password' => Hash::make('112233'),
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        //     [
-        //         'name' => 'Walk-in supplier',
-        //         'email' => 'walk-in-supplier@gmail.com',
-        //         'phone_number' => '03001134567',
-        //         'address'=>"walkinsupplier",
-        //         'type'=>"supplier",
-        //         'password' => Hash::make('112233'),
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        //     [
-        //         'name' => 'Other User',
-        //         'email' => 'other@user.com',
-        //         'phone_number' => '03001234567',
-        //         'address'=>"other city",
-        //         'type'=>"other",
-        //         'password' => Hash::make('112233'),
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // ];
-        // User::insert($cutomers);
-        // // app settings
-        // AppSetting::updateOrCreate(
-        //     ['key' => 'deletion_period'],
-        //     ['value' => AppSettingPeriod::OneWeek->value]
-        // );
-        // AppSetting::updateOrCreate(
-        //     ['key' => 'updation_period'],
-        //     ['value' => AppSettingPeriod::OneWeek->value]
-        // );
-        // LedgerSeason::insert([
-        //     'name'=>'Default Season',
-        //     'description'=>'Default Season',
-        //     'status'=>'active',
-        //     'start_date'=>now(),
-        //     'end_date'=>now()->addMonths(6),
-        //     'created_at'=>now(),
-        //     'updated_at'=>now(),
-        // ]);
+        // app settings
+        AppSetting::updateOrCreate(
+            ['key' => 'deletion_period'],
+            ['value' => AppSettingPeriod::OneWeek->value]
+        );
+        AppSetting::updateOrCreate(
+            ['key' => 'updation_period'],
+            ['value' => AppSettingPeriod::OneWeek->value]
+        );
+        LedgerSeason::insert([
+            'name'=>'Default Season',
+            'description'=>'Default Season',
+            'status'=>'active',
+            'start_date'=>now(),
+            'end_date'=>now()->addMonths(6),
+            'created_at'=>now(),
+            'updated_at'=>now(),
+        ]);
     }
 }
