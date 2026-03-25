@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             'index user',
             'create user',
             'update user',
+            'show user',
             'destroy user',
             'AllUsers user',
             'getUserRolesPermissions user',
@@ -46,13 +47,18 @@ class DatabaseSeeder extends Seeder
             'read role',
             'index role',
             'create role',
+            'show role',
             'update role',
             'destroy role',
             'manage role',
 
+            // User
+            'allPermissions role',
+
             // Ledger
             'read ledger',
             'index ledger',
+            'show ledger',
             'create ledger',
             'update ledger',
             'destroy ledger',
@@ -61,6 +67,7 @@ class DatabaseSeeder extends Seeder
             'read ledger season',
             'index ledger season',
             'create ledger season',
+            'show ledger season',
             'update ledger season',
             'destroy ledger season',
             'view ledger season summary',
@@ -69,6 +76,7 @@ class DatabaseSeeder extends Seeder
             'read sale',
             'index sale',
             'create sale',
+            'show sale',
             'update sale',
             'destroy sale',
 
@@ -76,6 +84,7 @@ class DatabaseSeeder extends Seeder
             'read purchase',
             'index purchase',
             'create purchase',
+            'show purchase',
             'update purchase',
             'destroy purchase',
 
@@ -83,6 +92,7 @@ class DatabaseSeeder extends Seeder
             'read investment',
             'index investment',
             'create investment',
+            'show invesstment',
             'update investment',
             'destroy investment',
 
@@ -90,6 +100,7 @@ class DatabaseSeeder extends Seeder
             'read category',
             'index category',
             'create category',
+            'show category',
             'update category',
             'destroy category',
 
@@ -97,6 +108,7 @@ class DatabaseSeeder extends Seeder
             'read expense type',
             'index expense type',
             'create expense type',
+            'show expense type',
             'update expense type',
             'destroy expense type',
 
@@ -116,6 +128,7 @@ class DatabaseSeeder extends Seeder
             'read expense',
             'index expense',
             'create expense',
+            'show expense',
             'update expense',
             'destroy expense',
         ];
@@ -178,7 +191,12 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
-        User::insert($cutomers);
+        foreach ($cutomers as $customer) {
+            User::firstOrCreate(
+                ['email' => $customer['email']], // ✅ unique field
+                $customer // ✅ data to insert if not exists
+            );
+        }
         
         $adminUser = User::where('email', 'admin@zee.com')->first();
         $adminUser->assignRole('Super Admin');

@@ -56,6 +56,16 @@ class RoleController extends Controller
         }
     }
 
+    public function allPermissions(Request $request)
+    {
+        try {
+            $roles = $this->roleService->allPermissions();
+            return $this->success($roles);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+
     public function destroy($id)
     {
         try {

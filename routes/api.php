@@ -44,6 +44,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('ledger-seasons', LedgerSeasonController::class);
         Route::get('season-summaries/{season_id}', [LedgerSeasonController::class, 'season_summaries']);
         Route::apiResource('roles', RoleController::class);
+        Route::get('permissions', [RoleController::class,'allPermissions']);
     });
 
 
