@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('balance', 15, 2)->default(0);
             $table->timestamps();
 
-            $table->unique(['user_id', 'category_id'], 'unique_user_category');
+            $table->unique(['user_id', 'category_id'], 'unique_user_category_payables');
         });
     }
 

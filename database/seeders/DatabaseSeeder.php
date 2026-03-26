@@ -7,9 +7,12 @@ use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\LedgerSeason;
 use App\Models\User;
+use Carbon\Carbon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,13 +21,123 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-          // Categories
+        // Categories
         $categories = [
             ['categoryName' => 'Kapas', 'created_at' => now(),'updated_at' => now()],
             ['categoryName' => 'Makai', 'created_at' => now(),'updated_at' => now()],
         ];
         Category::insert($categories);
+        // ✅ Create Permissions
+        $permissions = [
+            // Dashboard
+            'read dashboard',
+            'dashboardSummary ledger',
 
+            // User
+            'read user',
+            'index user',
+            'create user',
+            'update user',
+            'show user',
+            'destroy user',
+            'AllUsers user',
+            'getUserRolesPermissions user',
+
+            // Role
+            'read role',
+            'index role',
+            'create role',
+            'show role',
+            'update role',
+            'destroy role',
+            'manage role',
+
+            // User
+            'allPermissions role',
+
+            // Ledger
+            'read ledger',
+            'index ledger',
+            'show ledger',
+            'create ledger',
+            'update ledger',
+            'destroy ledger',
+
+            // Ledger Season
+            'read ledger season',
+            'index ledger season',
+            'create ledger season',
+            'show ledger season',
+            'update ledger season',
+            'destroy ledger season',
+            'view ledger season summary',
+
+            // Sale
+            'read sale',
+            'index sale',
+            'create sale',
+            'show sale',
+            'update sale',
+            'destroy sale',
+
+            // Purchase
+            'read purchase',
+            'index purchase',
+            'create purchase',
+            'show purchase',
+            'update purchase',
+            'destroy purchase',
+
+            // Investment
+            'read investment',
+            'index investment',
+            'create investment',
+            'show invesstment',
+            'update investment',
+            'destroy investment',
+
+            // Category
+            'read category',
+            'index category',
+            'create category',
+            'show category',
+            'update category',
+            'destroy category',
+
+            // Expense Type
+            'read expense type',
+            'index expense type',
+            'create expense type',
+            'show expense type',
+            'update expense type',
+            'destroy expense type',
+
+            // Activity Log
+            'read activity log',
+            'index activity log',
+            'destroy activity log',
+
+            // App Setting
+            'read app setting',
+            'index app setting',
+            'create app setting',
+            'update app setting',
+            'destroy app setting',
+
+            // Expense
+            'read expense',
+            'index expense',
+            'create expense',
+            'show expense',
+            'update expense',
+            'destroy expense',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'api']);
+        }
+        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'api']);
+        $superAdmin->givePermissionTo(Permission::all());
         // cutomers
         $cutomers = [
             [
@@ -78,7 +191,15 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
-        User::insert($cutomers);
+        foreach ($cutomers as $customer) {
+            User::firstOrCreate(
+                ['email' => $customer['email']], // ✅ unique field
+                $customer // ✅ data to insert if not exists
+            );
+        }
+        
+        $adminUser = User::where('email', 'admin@zee.com')->first();
+        $adminUser->assignRole('Super Admin');
         // app settings
         AppSetting::updateOrCreate(
             ['key' => 'deletion_period'],

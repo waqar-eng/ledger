@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Expense extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['ledger_id','amount', 'loss_quantity', 'rate', 'parent_id',];
+    protected $fillable = ['ledger_id','amount', 'loss_quantity', 'rate', 'parent_id','expense_type_id'];
     protected $hidden = ['deleted_at', 'updated_at'];
     public function ledger()
     {

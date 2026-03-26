@@ -33,7 +33,9 @@ use App\Services\Interfaces\ExpenseServiceInterface;
 use App\Services\ExpenseService;
 use App\Repositories\Interfaces\ExpenseRepositoryInterface;
 use App\Repositories\ExpenseRepository;
+use App\Repositories\ExpenseTypeRepository;
 use App\Repositories\Interfaces\AppSettingRepositoryInterface;
+use App\Repositories\Interfaces\ExpenseTypeRepositoryInterface;
 // Purchase bindings
 use App\Services\Interfaces\PurchaseServiceInterface;
 use App\Services\PurchaseService;
@@ -45,19 +47,27 @@ use App\Services\Interfaces\InvestmentServiceInterface;
 use App\Services\InvestmentService;
 use App\Repositories\Interfaces\InvestmentRepositoryInterface;
 use App\Repositories\Interfaces\Log_activityRepositoryInterface;
+use App\Repositories\Interfaces\RoleRepositoryInterface;
 use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Repositories\InvestmentRepository;
 use App\Repositories\LedgerSeasonRepository;
 use App\Repositories\Log_activityRepository;
+use App\Repositories\RoleRepository;
 use App\Repositories\StockRepository;
 use App\Services\AppSettingService;
 use App\Services\CategoryService;
 use App\Services\Interfaces\AppSettingServiceInterface;
 use App\Services\Interfaces\CategoryServiceInterface;
+//expense-type
+use App\Services\Interfaces\ExpenseTypeServiceInterface;
+use App\Services\ExpenseTypeService;
+
 use App\Services\Interfaces\Log_activityServiceInterface;
+use App\Services\Interfaces\RoleServiceInterface;
 use App\Services\Interfaces\StockServiceInterface;
 use App\Services\LedgerSeasonService;
 use App\Services\Log_activityService;
+use App\Services\RoleService;
 use App\Services\StockService;
 use Illuminate\Support\Facades\Gate;
 
@@ -81,6 +91,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LedgerRepositoryInterface::class, LedgerRepository::class);
         $this->app->bind(LedgerServiceInterface::class, LedgerService::class);
 
+        //role
+        $this->app->bind(RoleServiceInterface::class, RoleService::class);
+        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
+
         // Sale
         $this->app->bind(SaleServiceInterface::class, SaleService::class);
         $this->app->bind(SaleRepositoryInterface::class, SaleRepository::class);
@@ -102,6 +116,9 @@ class AppServiceProvider extends ServiceProvider
         //category
         $this->app->bind(CategoryServiceInterface::class, CategoryService::class);
         $this->app->bind(CategoryRepositoryInterface::class , CategoryRepository::class);
+        //expense-type
+        $this->app->bind(ExpenseTypeServiceInterface::class, ExpenseTypeService::class);
+        $this->app->bind(ExpenseTypeRepositoryInterface::class , ExpenseTypeRepository::class);
 
         $this->app->bind(StockServiceInterface::class, StockService::class);
         $this->app->bind(StockRepositoryInterface::class , StockRepository::class);

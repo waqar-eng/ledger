@@ -3,19 +3,21 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppSettingController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ExpenseTypeController;
 use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\LedgerSeasonController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StockController;
 
 Route::prefix('v1')->group(function () {
     //only login route public
     Route::post('/login', [UserController::class, 'login']);
 
-    Route::middleware(['auth:api',])->group(function () {
+    Route::middleware(['auth:api',"check_permission"])->group(function () {
 
         Route::get('user-details',[UserController::class, 'userDetails']);
         Route::get('/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
@@ -27,19 +29,22 @@ Route::prefix('v1')->group(function () {
         });
         Route::resource('users', UserController::class);
         Route::get('all-users', [UserController::class,'AllUsers']);
+        Route::get('current-user', [UserController::class,'getUserRolesPermissions']);
          Route::apiResource('sales', SaleController::class);
         // Route::apiResource('purchases', PurchaseController::class);
         // Route::apiResource('expenses', ExpenseController::class);
         Route::resource('investment', InvestmentController::class);
         Route::resource('/activity-logs', ActivityLogController::class);
         Route::resource('/categories', CategoryController::class);
+        Route::resource('/expense-type', ExpenseTypeController::class);
         Route::resource('stocks', StockController::class);
         Route::resource('app-settings', AppSettingController::class);
 
         Route::get('season-search', [LedgerSeasonController::class, 'search']);
         Route::apiResource('ledger-seasons', LedgerSeasonController::class);
         Route::get('season-summaries/{season_id}', [LedgerSeasonController::class, 'season_summaries']);
-
+        Route::apiResource('roles', RoleController::class);
+        Route::get('permissions', [RoleController::class,'allPermissions']);
     });
 
 

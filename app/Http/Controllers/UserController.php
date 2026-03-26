@@ -51,7 +51,7 @@ class UserController extends Controller
     public function show($id)
     {
         try {
-            $user = $this->userService->find($id);
+            $user = $this->userService->show($id);
             return $this->success($user);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
@@ -93,7 +93,15 @@ class UserController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
-
+    public function getUserRolesPermissions(Request $request)
+    {
+        try {
+            $userDetails = $this->userService->userRolesPermissions();
+            return $this->success($userDetails, User::USER_PERMISSIONS);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 
    public function userDetails(Request $request)
    {

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('rate', 10, 2)->nullable();
             $table->foreignId('parent_id')->nullable()
             ->constrained('expenses')->nullOnDelete();
+            $table->foreignId('expense_type_id')->constrained('expense_types')->onDelete('cascade');
             $table->softDeletes();
             $table->timestamps();
         });
