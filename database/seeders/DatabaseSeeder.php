@@ -31,12 +31,14 @@ class DatabaseSeeder extends Seeder
         $permissions = [
             // Dashboard
             'read dashboard',
+            'billNumber ledger',
             'dashboardSummary ledger',
 
             // User
             'read user',
             'index user',
             'create user',
+            'store user',
             'update user',
             'show user',
             'destroy user',
@@ -46,6 +48,7 @@ class DatabaseSeeder extends Seeder
             // Role
             'read role',
             'index role',
+            'store role',
             'create role',
             'show role',
             'update role',
@@ -59,23 +62,26 @@ class DatabaseSeeder extends Seeder
             'read ledger',
             'index ledger',
             'show ledger',
+            'store ledger',
             'create ledger',
             'update ledger',
             'destroy ledger',
 
             // Ledger Season
-            'read ledger season',
-            'index ledger season',
-            'create ledger season',
-            'show ledger season',
-            'update ledger season',
-            'destroy ledger season',
+            'read ledgerseason',
+            'index ledgerseason',
+            'create ledgerseason',
+            'store ledgerseason',
+            'show ledgerseason',
+            'update ledgerseason',
+            'destroy ledgersseason',
             'view ledger season summary',
 
             // Sale
             'read sale',
             'index sale',
             'create sale',
+            'store sale',
             'show sale',
             'update sale',
             'destroy sale',
@@ -84,6 +90,7 @@ class DatabaseSeeder extends Seeder
             'read purchase',
             'index purchase',
             'create purchase',
+            'store purchase',
             'show purchase',
             'update purchase',
             'destroy purchase',
@@ -92,6 +99,7 @@ class DatabaseSeeder extends Seeder
             'read investment',
             'index investment',
             'create investment',
+            'store investment',
             'show invesstment',
             'update investment',
             'destroy investment',
@@ -100,17 +108,19 @@ class DatabaseSeeder extends Seeder
             'read category',
             'index category',
             'create category',
+            'store category',
             'show category',
             'update category',
             'destroy category',
 
             // Expense Type
-            'read expense type',
-            'index expense type',
-            'create expense type',
-            'show expense type',
-            'update expense type',
-            'destroy expense type',
+            'read expensetype',
+            'index expensetype',
+            'create expensetype',
+            'store expensetype',
+            'show expensetype',
+            'update expensetype',
+            'destroy expensetype',
 
             // Activity Log
             'read activity log',
@@ -127,6 +137,7 @@ class DatabaseSeeder extends Seeder
             // Expense
             'read expense',
             'index expense',
+            'store expense',
             'create expense',
             'show expense',
             'update expense',
