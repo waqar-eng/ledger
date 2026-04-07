@@ -62,6 +62,7 @@ class LedgerController extends Controller
 
     public function update(LedgerRequest $request, $id)
     {
+        return 'here';
         try {
             $this->authorizeModelAction('update', Ledger::class, $id);
             $ledger = $this->ledgerService->update($request->all(), $id);

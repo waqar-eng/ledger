@@ -74,9 +74,12 @@ class DatabaseSeeder extends Seeder
             'store ledgerseason',
             'show ledgerseason',
             'update ledgerseason',
-            'destroy ledgersseason',
+            'destroy ledgerseason',
             'view ledger season summary',
-
+            'index stock',
+            'index activitylog',
+            'season_summaries ledgerseason',
+            'read stock',
             // Sale
             'read sale',
             'index sale',
