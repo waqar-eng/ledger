@@ -95,7 +95,20 @@ class UserService extends BaseService implements UserServiceInterface
                 });
             })
             ->orderByDesc('id')->get();
-   }
+    }
+    public function create($request)
+    {
+        $roleId = $request['role_id'] ?? null;
+        unset($request['role_id']);
+        $user = parent::create($request);
+        if ($user && $roleId) {
+            $role = Role::find($roleId);
+            if ($role) {
+                $user->assignRole($role->name);
+            }
+        }
+        return $user ? $user : [];
+    }
     public function update($request, $id)
     {
         unset($request['email']);

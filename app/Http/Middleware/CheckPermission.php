@@ -11,6 +11,9 @@ class CheckPermission
     use ApiResponseTrait;
     public function handle(Request $request, Closure $next)
     {
+        if ($request->route() && $request->route()->getActionMethod() === 'getUserRolesPermissions') {
+            return $next($request);
+        }
         $user = auth()->user();
 
         if (!$user) {
