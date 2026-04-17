@@ -66,6 +66,8 @@ class DatabaseSeeder extends Seeder
             'create ledger',
             'update ledger',
             'destroy ledger',
+            'report ledger',
+            'activeSeason ledger',
 
             // Ledger Season
             'read ledgerseason',

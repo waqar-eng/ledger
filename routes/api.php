@@ -23,11 +23,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/dashboard-summary', [LedgerController::class, 'dashboardSummary']);
         Route::get('/ledgers/reports', [LedgerController::class, 'report']);
         Route::get('ledgers/bill-number', [LedgerController::class, 'billNumber']);
+        Route::get('active-season', [LedgerController::class, 'activeSeason']);
 
         Route::middleware('check.active.season')->group(function (){
             Route::resource('ledgers', LedgerController::class);
+            Route::resource('users', UserController::class);
         });
-        Route::resource('users', UserController::class);
         Route::get('all-users', [UserController::class,'AllUsers']);
         Route::get('current-user-permissions', [UserController::class,'getUserRolesPermissions']);
          Route::apiResource('sales', SaleController::class);

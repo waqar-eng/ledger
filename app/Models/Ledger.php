@@ -26,7 +26,8 @@ class Ledger extends Model
         'bill_no',
         'user_id',
         'category_id',
-        'parent_id'
+        'parent_id',
+        'ledger_season_id'
     ];
     protected $casts = [
         'amount' => 'float',
@@ -100,4 +101,6 @@ public const LEDGER_DELETION_ERROR= "You can only delete record created within t
 public const LEDGER_UPDATION_ERROR= "You can only update record created within the allowed period.";
 public const WALK_IN_BUYER_ACCOUNT_ERROR= "Remaining amount is not allowed for walk-in buyer";
 public const WALK_IN_SUPPLIER_ACCOUNT_ERROR= "Remaining amount is not allowed for walk-in supplier";
+public const ACTIVE_SEASON_SUCCESS= "Active season fetch successfully";
+public const ACTIVE_SEASON_FAILED= "No active season found";
 }

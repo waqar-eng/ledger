@@ -99,4 +99,16 @@ class LedgerController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+    public function activeSeason()
+    {
+        try {
+            $activeSeason=$this->ledgerService->activeSeason();
+            if($activeSeason)
+                return $this->success($activeSeason, Ledger::ACTIVE_SEASON_SUCCESS);
+            else
+                return $this->success('', Ledger::ACTIVE_SEASON_FAILED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 }

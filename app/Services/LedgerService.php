@@ -44,6 +44,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         [$start_date, $end_date] = $this->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
         $query = $this->buildQuery($filters, $start_date, $end_date);
+        
         $paginated = $this->getFilteredTransactionsWithBalance($query , $page , $perPage);
         $allData = (clone $query)->get();
         $totals = $this->calculateTotals($allData, $filters);
@@ -94,12 +95,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function buildQuery(array $filters, $start_date, $end_date)
     {
-        $currentSeason= LedgerSeason::getActiveSeason();
-         if (!$currentSeason) {
+        $seasonId= $filters['seasonId'];
+         if (!$seasonId) {
             throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
         }
         $query= Ledger::with(['user','category','purchase', 'investment', 'expense', 'sale', 'payment' ])
-        ->whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date])
+        ->where('ledger_season_id', $seasonId)
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['user_id']), fn($q) => $q->where('user_id', $filters['user_id']))
             ->when(!empty($filters['search_term']), fn($q) => $q->where('description', 'like', '%' . $filters['search_term'] . '%'))
@@ -228,8 +229,13 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public static function ledgerNewTotalAndType($request, $id = null)
     {
-        $currentSeason= LedgerSeason::getActiveSeason();
-        $query = Ledger::whereBetween('created_at', [$currentSeason->start_date, $currentSeason->end_date]);
+        $seasonId= $request['ledger_season_id'];
+         if (!$seasonId) {
+            throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
+        }
+        $query = Ledger::where('ledger_season_id', $seasonId)
+               ->latest() // orders by created_at DESC
+               ->first();
         if ($id) {
             $query->where('id', '<', $id);
         }
@@ -626,10 +632,15 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $count = Ledger::count() ?? 0;
         return $count + 1;
     }
+    
+    public function activeSeason()
+    {
+        return LedgerSeason::getActiveSeason();
+    }
 
     public function report($request)
     {
-        $this->report_service->generateReport($request);
+        return $this->report_service->generateReport($request);
     }
     public function delete($id)
     {
