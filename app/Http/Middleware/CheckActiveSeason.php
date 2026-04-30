@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\AppEnum;
 use App\Models\LedgerSeason;
 use App\Traits\ApiResponseTrait;
 use Closure;
@@ -24,7 +25,7 @@ class CheckActiveSeason
         if ($user) {
 
             // Allow Super Admin to access any season
-            if ($user->hasRole('Super Admin')) {
+            if ($user->hasRole(AppEnum::SuperAdmin)) {
                 return $next($request);
             }
 

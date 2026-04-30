@@ -42,5 +42,6 @@ enum AppEnum:string
     case Completed = 'completed';
     case EndDate = 'end_date';
     case Upcoming = 'upcoming';
+    case SuperAdmin = 'Super Admin';
 
 }
