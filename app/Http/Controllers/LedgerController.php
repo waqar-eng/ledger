@@ -19,10 +19,10 @@ class LedgerController extends Controller
         $this->ledgerService = $ledgerService;
     }
 
-    public function dashboardSummary()
+    public function dashboardSummary(LedgerRequest $request)
     {
         try {
-             $summary = $this->ledgerService->getDashboardSummary();
+             $summary = $this->ledgerService->getDashboardSummary($request);
              return $this->success($summary);
         } catch (Exception $e){
             return $this->error($e->getMessage(),500);
@@ -49,7 +49,7 @@ class LedgerController extends Controller
         }
     }
 
-    public function show($id)
+    public function show($season_id,$id)
     {
         try {
             $user = $this->ledgerService->find($id);
@@ -60,7 +60,7 @@ class LedgerController extends Controller
         }
     }
 
-    public function update(LedgerRequest $request, $id)
+    public function update(LedgerRequest $request,$season_id, $id)
     {
         try {
             $this->authorizeModelAction('update', Ledger::class, $id);

@@ -17,7 +17,7 @@ class ExpenseTypeController extends Controller
         $this->expenseTypeService = $expenseTypeService;
     }
 
-    public function index(Request $request)
+    public function index(ExpenseTypeRequest $request)
     {
         try {
             $expenseTypes = $this->expenseTypeService->findAll($request->all());

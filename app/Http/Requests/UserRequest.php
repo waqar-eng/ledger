@@ -9,6 +9,7 @@ class UserRequest extends FormRequest
     public function all($keys = null) {
         $data = parent::all( $keys);
         $data['user_id'] = $this->route('user_id');
+        $data['season_id'] = $this->route('season_id');
         return $data;
      }
     /**

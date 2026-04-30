@@ -18,16 +18,22 @@ class CheckActiveSeason
      */
     public function handle(Request $request, Closure $next): Response
     {
-            // Index or Show route allow without active season
-        $allowedRoutes = ['ledgers.index', 'ledgers.show'];
-        if (in_array($request->route()->getName(), $allowedRoutes)) {
-            return $next($request);
+        $seasonId = $request->route('season_id');
+        $user = auth()->user();
+
+        if ($user) {
+
+            // Allow Super Admin to access any season
+            if ($user->hasRole('Super Admin')) {
+                return $next($request);
+            }
+
+            // Restrict normal users
+            if ($user->season_id != $seasonId) {
+                return $this->error('User does not belong to this season ', 403);
+            }
         }
 
-        $active = LedgerSeason::where('status','active')->first();
-        if(!$active){
-            return $this->error(LedgerSeason::NO_ACTIVE_SEASON, 403);
-        }
         return $next($request);
     }
 }

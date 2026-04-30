@@ -22,7 +22,8 @@ class User extends Authenticatable
         'address',
         'type',
         'password',
-        'role_id'
+        'role_id',
+        'season_id'
     ];
     protected $guard_name = 'api';
     protected $hidden = [

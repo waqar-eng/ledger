@@ -36,7 +36,7 @@ class RoleController extends Controller
         }
     }
 
-    public function show($id)
+    public function show($season_id,$id)
     {
         try {
             $role = $this->roleService->find($id);
@@ -46,7 +46,7 @@ class RoleController extends Controller
         }
     }
 
-    public function update(RoleRequest $request, $id)
+    public function update(RoleRequest $request,$season_id, $id)
     {
         try {
             $role = $this->roleService->update($request->all(), $id);
@@ -66,7 +66,7 @@ class RoleController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy($season_id,$id)
     {
         try {
             $this->roleService->delete($id);

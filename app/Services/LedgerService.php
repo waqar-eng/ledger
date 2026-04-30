@@ -95,12 +95,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
     private function buildQuery(array $filters, $start_date, $end_date)
     {
-        $seasonId= $filters['seasonId'];
-         if (!$seasonId) {
+        $season_id= $filters['season_id'];
+         if (!$season_id) {
             throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
         }
         $query= Ledger::with(['user','category','purchase', 'investment', 'expense', 'sale', 'payment' ])
-        ->where('ledger_season_id', $seasonId)
+        ->where('ledger_season_id', $season_id)
             ->when($start_date && $end_date, fn($q) => $this->applyDateFilters($q, $start_date, $end_date))
             ->when(!empty($filters['user_id']), fn($q) => $q->where('user_id', $filters['user_id']))
             ->when(!empty($filters['search_term']), fn($q) => $q->where('description', 'like', '%' . $filters['search_term'] . '%'))
@@ -229,13 +229,11 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     }
     public static function ledgerNewTotalAndType($request, $id = null)
     {
-        $seasonId= $request['ledger_season_id'];
-         if (!$seasonId) {
+        $season_id= $request['ledger_season_id'];
+         if (!$season_id) {
             throw new \Exception(LedgerSeason::NO_ACTIVE_SEASON);
         }
-        $query = Ledger::where('ledger_season_id', $seasonId)
-               ->latest() // orders by created_at DESC
-               ->first();
+        $query = Ledger::where('ledger_season_id', $season_id);
         if ($id) {
             $query->where('id', '<', $id);
         }
@@ -369,17 +367,14 @@ class LedgerService extends BaseService implements LedgerServiceInterface
       });
     }
 
-    public function getDashboardSummary(): array
+    public function getDashboardSummary($request): array
     {
         $now = Carbon::now();
-        $season = LedgerSeason::getActiveSeason();
-        $start = $season->start_date ?? '';
-        $end   = $season->end_date ?? '';
+        $season_id = $request['season_id'];
 
-        $daily = Ledger::whereBetween('created_at', [$start, $end])->whereDate('created_at', $now->toDateString())->get();
-        $monthly = Ledger::whereBetween('created_at', [$start, $end])->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->get();
-        $yearly = Ledger::whereBetween('created_at', [$start, $end])->whereYear('created_at', $now->year)->get();
-
+        $daily = Ledger::where('ledger_season_id', $season_id)->whereDate('created_at', $now->toDateString())->get();
+        $monthly = Ledger::where('ledger_season_id', $season_id)->whereMonth('created_at', $now->month)->get();
+        $yearly = Ledger::where('ledger_season_id', $season_id)->whereYear('created_at', $now->year)->get();
         $formatTotals = fn($collection) => [
             'sales' => $collection->where('ledger_type', 'sale')->sum('amount'),
             'expenses' => $collection->where('ledger_type', 'expense')->sum('amount'),

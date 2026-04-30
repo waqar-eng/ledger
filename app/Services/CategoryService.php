@@ -13,6 +13,10 @@ class CategoryService extends BaseService implements CategoryServiceInterface
         parent::__construct($CategoryRepository);
     }
     public function findall(array $filters){
-        return Category::with('stock')->get();
+        return Category::with('stock')
+        ->when(!empty($filters['seasonId']), function ($query) use ($filters) {
+            $query->where('season_id', $filters['seasonId']);
+        })
+        ->get();
     }
 }

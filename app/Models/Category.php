@@ -11,7 +11,7 @@ use Spatie\Activitylog\LogOptions;
 class Category extends Model
 {
     use HasFactory, LogsActivity ,SoftDeletes;
-    protected $fillable = ['categoryName'];
+    protected $fillable = ['categoryName','season_id'];
     protected $hidden = ['deleted_at', 'updated_at'];
 
 
