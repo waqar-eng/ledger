@@ -9,6 +9,7 @@ class CategoryRequest extends FormRequest
       public function all($keys = null){
         $data = parent::all();
         $data['id'] = $this->route('category');
+        $data['season_id'] = $this->route('season_id');
         return $data;
     }
 
@@ -20,7 +21,8 @@ class CategoryRequest extends FormRequest
     {
 
        $commonRules = [
-            'categoryName' => 'required|string|max:255'
+            'categoryName' => 'required|string|max:255',
+            'season_id' => 'required|string|max:255'
         ];
          $ruleId = [
             'id' => 'required|integer|exists:categories,id,deleted_at,NULL'

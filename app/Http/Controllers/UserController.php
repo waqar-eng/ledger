@@ -48,7 +48,7 @@ class UserController extends Controller
         }
     }
 
-    public function show($id)
+    public function show($season_id,$id)
     {
         try {
             $user = $this->userService->show($id);
@@ -58,7 +58,7 @@ class UserController extends Controller
         }
     }
 
-    public function update(UserRequest $request, $id)
+    public function update(UserRequest $request,$season_id, $id)
     {
         try {
             $this->authorizeModelAction('update', User::class, $id);
@@ -69,7 +69,7 @@ class UserController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy($season_id,$id)
     {
         try {
             $this->authorizeModelAction('delete', User::class, $id);

@@ -10,6 +10,7 @@ class ExpenseTypeRequest extends FormRequest
     {
         $data = parent::all();
         $data['id'] = $this->route('expense_type');
+        $data['season_id'] = $this->route('season_id');
         return $data;
     }
 
@@ -22,7 +23,8 @@ class ExpenseTypeRequest extends FormRequest
     {
 
         $commonRules = [
-            'expenseTypeName' => 'required|string|max:255'
+            'expenseTypeName' => 'required|string|max:255',
+            'season_id' => 'required|string|max:255'
         ];
 
         $ruleId = [

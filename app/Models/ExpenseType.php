@@ -10,7 +10,7 @@ class ExpenseType extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['expenseTypeName'];
+    protected $fillable = ['expenseTypeName','season_id'];
 
     protected $hidden = ['deleted_at', 'updated_at'];
 

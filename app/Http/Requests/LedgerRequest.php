@@ -9,7 +9,8 @@ class LedgerRequest extends FormRequest
 {
      public function all($keys = null){
         $data = parent::all();
-        $data['id'] = $this->route('ledger');
+        $data['id'] = $this->route('ledger_id');
+        $data['season_id'] = $this->route('season_id');
         return $data;
     }
 

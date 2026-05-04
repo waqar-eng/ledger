@@ -7,37 +7,52 @@ use Illuminate\Validation\Rule;
 
 class RoleRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    public function all($keys = null)
+    {
+        $data = parent::all($keys);
+        $data['role_id'] = $this->route('role_id');
+        $data['season_id'] = $this->route('season_id');
+        return $data;
+    }
+
     public function authorize(): bool
     {
-        // Allow all users for now; you can add permission checks here
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
-        // Get the role ID from the route (for updates)
-        $roleId = $this->route('role');
+        switch ($this->method()) {
 
-        return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                // Unique name, ignore current role on update
-                Rule::unique('roles', 'name')->ignore($roleId),
-            ],
-        ];
+            case 'POST':
+                return [
+                    'name' => 'required|string|max:255|unique:roles,name',
+                ];
+
+            case 'GET':
+                return [
+                    'search' => 'nullable|string',
+                    'per_page' => 'nullable|integer',
+                ];
+
+            case 'PUT':
+            case 'PATCH':
+                $roleId = $this->route('role_id');
+
+                return [
+                    'name' => [
+                        'required',
+                        'string',
+                        'max:255',
+                        Rule::unique('roles', 'name')->ignore($roleId),
+                    ],
+                ];
+
+            default:
+                return [];
+        }
     }
 
-    /**
-     * Custom messages (optional)
-     */
     public function messages(): array
     {
         return [
