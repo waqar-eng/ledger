@@ -21,10 +21,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $season = LedgerSeason::firstOrCreate([
+            'name' => 'Default Season'
+        ],[
+            'description' => 'Default Season',
+            'status' => 'active',
+            'start_date' => now(),
+            'end_date' => now()->addMonths(6),
+        ]);
         // Categories
         $categories = [
-            ['categoryName' => 'Kapas', 'created_at' => now(),'updated_at' => now()],
-            ['categoryName' => 'Makai', 'created_at' => now(),'updated_at' => now()],
+            ['categoryName' => 'Kapas','season_id' => $season->id, 'created_at' => now(),'updated_at' => now()],
+            ['categoryName' => 'Makai', 'season_id' => $season->id,'created_at' => now(),'updated_at' => now()],
         ];
         Category::insert($categories);
         // ✅ Create Permissions
@@ -165,6 +173,7 @@ class DatabaseSeeder extends Seeder
                 'address'=>"admin address",
                 'type'=> 'owner',
                 'password' => Hash::make('admin@zee$#1'),
+                'season_id' => $season->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -175,6 +184,7 @@ class DatabaseSeeder extends Seeder
                 'address'=>"investor address",
                 'type'=> 'investor',
                 'password' => Hash::make('112233'),
+                'season_id' => $season->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -185,6 +195,7 @@ class DatabaseSeeder extends Seeder
                 'address'=>"walkinbuyer",
                 'type'=>"buyer",
                 'password' => Hash::make('112233'),
+                'season_id' => $season->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -195,6 +206,7 @@ class DatabaseSeeder extends Seeder
                 'address'=>"walkinsupplier",
                 'type'=>"supplier",
                 'password' => Hash::make('112233'),
+                'season_id' => $season->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -205,6 +217,7 @@ class DatabaseSeeder extends Seeder
                 'address'=>"other city",
                 'type'=>"other",
                 'password' => Hash::make('112233'),
+                'season_id' => $season->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -227,14 +240,6 @@ class DatabaseSeeder extends Seeder
             ['key' => 'updation_period'],
             ['value' => AppSettingPeriod::OneWeek->value]
         );
-        LedgerSeason::insert([
-            'name'=>'Default Season',
-            'description'=>'Default Season',
-            'status'=>'active',
-            'start_date'=>now(),
-            'end_date'=>now()->addMonths(6),
-            'created_at'=>now(),
-            'updated_at'=>now(),
-        ]);
+        
     }
 }

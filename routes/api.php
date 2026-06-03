@@ -68,7 +68,6 @@ Route::prefix('v1')->group(function () {
 
 
             Route::get('seasons/{season_id}/all-users', [UserController::class,'AllUsers']);
-            Route::resource('ledgers', LedgerController::class);
         });
         Route::get('current-user-permissions', [UserController::class,'getUserRolesPermissions']);
          Route::apiResource('sales', SaleController::class);
