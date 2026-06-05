@@ -62,10 +62,10 @@ class LedgerSeasonController extends Controller
         }
     }
 
-    public function update(LedgerSeasonRequest $request ,$id)
+    public function update(Request $request ,$id)
     {
          try {
-            $season = $this->ledgerSeasonService->updateSeason($request->all(), $id);
+            return  $this->ledgerSeasonService->updateSeason($request->all(), $id);
             return $this->success($season, LedgerSeason::LEDGER_SEASON_UPDATED);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

@@ -17,6 +17,7 @@ use App\Models\LedgerSeason;
 use App\Models\payment;
 use App\Models\Purchase;
 use App\Services\Helpers\LedgerHelper;
+use App\Services\Helpers\LedgerReverseHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -32,6 +33,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     private ReportService $report_service,
     private PurchaseService $purchase_service,
     private LedgerHelper $ledgerHelper,
+    private LedgerReverseHelper $ledgerReverseHelper
     )
     {
         parent::__construct($repository);
@@ -43,7 +45,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $page = $filters['page'] ?? 1;
         [$start_date, $end_date] = $this->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
-        $query = $this->buildQuery($filters, $start_date, $end_date);
+        $query = $this->buildQuery($filters, $start_date, $end_date)->withCount('adjustments');
         
         $paginated = $this->getFilteredTransactionsWithBalance($query , $page , $perPage);
         $allData = (clone $query)->get();
@@ -419,6 +421,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         // }
         return $ledger;
     }
+    public function buildRequest(int $ledgerId): array
+    {
+        return $this->ledgerReverseHelper->buildFakeRequest($ledgerId);
+    }
     public function update($request, $id)
     {
         return DB::transaction(function () use ($request, $id) {
@@ -476,7 +482,10 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             }
             $adjustmentAmount = LedgerHelper::resolveAdjustmentAmount($ledger, $delta, $hasPaidAmountChange,$salePaidDelta);
             $adjustmentTotal = LedgerHelper::calculateTotalAmount($ledger->ledger_type,$latestLedger->total_amount, $delta);
-
+            if(($delta + $latestLedger->total_amount) < 0){
+                throw new \Exception("Not enough blance available. Only {$latestLedger->total_amount } left, & current total is {$delta}");
+            }
+            
             $paidDelta = 0;
             if ($ledger->ledger_type === AppEnum::Purchase->value && array_key_exists('paid_amount', $request))
             {
@@ -690,6 +699,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $adjustment = Ledger::create([
             'parent_id'    => $ledger->id,
             'ledger_type'  => $ledger->ledger_type,
+            'type'         => $ledger->type,
             'user_id'  => $ledger->user_id ?? null,
             'amount'       => $amount,
             'category_id'  => $ledger->category_id,
@@ -712,120 +722,35 @@ class LedgerService extends BaseService implements LedgerServiceInterface
 
             AppEnum::Expense->value,
             AppEnum::MoistureLoss->value
-                => $this->reverseExpense($original, $adjustment, $amount),
+                => $this->ledgerReverseHelper->reverseExpense(
+                    $original,
+                    $adjustment,
+                    $amount
+                ),
 
             AppEnum::Purchase->value
-                => $this->reversePurchase($original, $adjustment),
+                => $this->ledgerReverseHelper->reversePurchase(
+                    $original,
+                    $adjustment
+                ),
 
             AppEnum::Sale->value
-                => $this->reverseSale($original, $adjustment),
+                => $this->ledgerReverseHelper->reverseSale(
+                    $original,
+                    $adjustment
+                ),
 
             AppEnum::Payment->value,
             AppEnum::ReceivePayment->value
-                => $this->reversePayment($original, $adjustment),
+                => $this->ledgerReverseHelper->reversePayment(
+                    $original,
+                    $adjustment
+                ),
         };
     }
     private function reverseInvestment(Ledger $original, Ledger $adjustment, float $amount): void
     {
         LedgerHelper::createInvestmentEntry($original, $adjustment, $amount, $original->category_id);
-    }
-    private function reverseExpense(Ledger $original, Ledger $adjustment, float $amount)
-    {
-        $expense = $original->expense;
-        if (!$expense) return;
-
-        $payload = ['amount' => $amount];
-        // Moisture loss specific fields
-        if ($original->ledger_type === AppEnum::MoistureLoss->value) {
-            $payload['loss_quantity'] = LedgerHelper::adjustedParentSum(
-                $expense,
-                'loss_quantity'
-            );
-            $payload['rate'] = LedgerHelper::adjustedParentSum(
-                $expense,
-                'rate'
-            );
-            $availableStock = $this->stock_service->checkStock([
-            'category_id' => $original->category_id,
-            'ledger_type' => $original->ledger_type,
-            'quantity'    => $payload['loss_quantity'],
-        ]);
-        $this->stock_service->updateStockByDelta($original->category_id, $payload['loss_quantity']);
-        }
-
-        Ledgerhelper::createReversal(
-            Expense::class,
-            $original,
-            $adjustment,
-            $expense,
-            $payload
-        );
-    }
-
-    private function reversePurchase(Ledger $original, Ledger $adjustment): void
-    {
-        $basePurchase = $original->purchase;
-        if (!$basePurchase) return;
-        $adjAmount   = LedgerHelper::adjustedSum($basePurchase, 'amount');
-        $adjQuantity = LedgerHelper::adjustedSum($basePurchase, 'quantity');
-        $adjRate = LedgerHelper::adjustedSum($basePurchase, 'rate');
-        $adjRemain = LedgerHelper::adjustedParentSum($original, 'amount');
-        $availableStock = $this->stock_service->checkStock([
-            'category_id' => $original->category_id,
-            'ledger_type' => $original->ledger_type,
-            'quantity'    => $adjQuantity,
-        ]);
-        if ($availableStock < $adjQuantity) {
-            LedgerHelper::guardStock($availableStock);
-        }
-        $this->account_payable_service->checkAccountPayable(
-            ['category_id' => $original->category_id, 'user_id' => $original->user_id],
-            $adjRemain
-        );
-        LedgerHelper::createReversal(Purchase::class, $original,$adjustment,$basePurchase,
-        ['quantity' => -$adjQuantity, 'amount' => -$adjAmount, 'rate' => -$adjRate]);
-        $this->stock_service->updateStockByDelta($original->category_id, -$adjQuantity);
-        LedgerHelper::adjustBalance(AccountPayable::class, $original, -$adjRemain);
-    }
-    private function reverseSale(Ledger $original, Ledger $adjustment)
-    {
-        $baseSale = $original->sale;
-        if (!$baseSale) {return;}
-
-        $adjAmount   = LedgerHelper::adjustedSum($baseSale, 'amount');
-        $adjQuantity = LedgerHelper::adjustedSum($baseSale, 'quantity');
-        $adjRemain = LedgerHelper::adjustedParentSum($original, 'amount');
-
-        $this->account_receiveable_service->checkAccountReceivable(
-            ['category_id' => $original->category_id, 'user_id' => $original->user_id],
-            $adjRemain
-        );
-        $this->stock_service->updateStockByDelta($original->category_id, $adjQuantity);
-        LedgerHelper::adjustBalance(AccountReceivable::class, $original, -$adjRemain);
-
-        LedgerHelper::createReversal(Sale::class, $original, $adjustment, $baseSale,
-        ['quantity' => -$adjQuantity, 'amount' => -$adjAmount]
-        );
-    }
-    private function reversePayment(Ledger $original, Ledger $adjustment): void {
-        $basePayment = $original->payment;
-        if (!$basePayment) {return;}
-
-        $adjPaidAmt   = LedgerHelper::adjustedSum($basePayment, 'paid_amount');
-
-        LedgerHelper::createReversal(Payment::class,$original,$adjustment, $basePayment,
-        [
-                'paid_amount'      => -$adjPaidAmt,
-                'remaining_amount'=> $basePayment->remaining_amount ?? 0,
-                'amount'           => $basePayment->amount ?? 0,
-                'direction'        => $original->ledger_type === AppEnum::ReceivePayment->value
-                                        ? 'receive'
-                                        : 'pay',
-            ]
-        );
-        $model = $original->ledger_type === AppEnum::ReceivePayment->value
-        ? AccountReceivable::class : AccountPayable::class;
-        LedgerHelper::adjustBalance($model, $original, $adjPaidAmt);
     }
 
 }

@@ -16,7 +16,7 @@ class CategoryController extends Controller
     {
         $this->categoryService = $categoryService;
     }
-    public function index(Request $request)
+    public function index(CategoryRequest $request)
     {
         try {
             $categories = $this->categoryService->findall($request->all());

@@ -30,12 +30,17 @@ class CategoryRequest extends FormRequest
         switch($this->method()){
             case 'POST':
                 return $commonRules;
-            case 'GET':
             case 'DELETE':
                 return $ruleId;
             case 'PUT':
             case 'PATCH':
                 return array_merge($ruleId,$commonRules);
+            case 'GET':
+                // if route contains category id → show
+                if ($this->route('category')) {
+                    return $ruleId;
+                }
+                return [];
             default:
                 return [];
     }
