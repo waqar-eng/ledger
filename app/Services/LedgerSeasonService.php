@@ -42,7 +42,6 @@ class LedgerSeasonService extends BaseService implements LedgerSeasonServiceInte
                     $start = Carbon::parse($season->start_date)->startOfDay();
                     $end   = Carbon::parse($season->end_date)->endOfDay();
                     $stockExists = Stock::whereBetween('created_at', [$start, $end])->where('total_quantity', '>', 0)->exists();
-                    
                     dispatch(new ProcessSeasonClosingJob($season));
                     // Check payables
                     $payableExists = AccountPayable::where('balance', '>', 0)->whereBetween('created_at', [$start, $end])->exists();

@@ -12,6 +12,7 @@ class SeasonSummary extends Model
         'total_purchases',
         'total_expenses',
         'total_investment',
+        'total_withdraw',
         'profit',
         'investor_breakdown',
         'remaining_stock',

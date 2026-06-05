@@ -33,13 +33,14 @@ class ProcessSeasonClosingJob implements ShouldQueue
         $end   = $season->end_date;
 
         // 1. Fetch all ledgers inside date range
-        $ledgers = Ledger::whereBetween('date', [$start, $end])->get();
+        $ledgers = Ledger::where('ledger_season_id', $season->id)->get();
 
         // 2. Calculate sales, purchases, expenses
         $totalSales = $ledgers->where('ledger_type', 'sale')->sum('amount');
         $totalPurchases = $ledgers->where('ledger_type', 'purchase')->sum('amount');
         $totalExpenses = $ledgers->whereIn('ledger_type', ['expense', 'moisture_loss'])->sum('amount');
         $totalInvestment = $ledgers->where('ledger_type', 'investment')->sum('amount');
+        $totalWithdraw = $ledgers->where('ledger_type', 'withdraw')->sum('amount');
 
         // 3. Investments (assuming investment table has created_at)
         $investments = Investment::with('user')->where('type', 'investment')->whereBetween('date', [$start, $end])->get();
@@ -91,6 +92,7 @@ class ProcessSeasonClosingJob implements ShouldQueue
                 'total_purchases' => $totalPurchases,
                 'total_expenses' => $totalExpenses,
                 'total_investment' => $totalInvestment,
+                'total_withdraw' => $totalWithdraw,
                 'profit' => $profit,
 
                 'remaining_stock' => json_encode($remainingStock->values()),

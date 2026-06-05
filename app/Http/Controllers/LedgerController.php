@@ -75,8 +75,17 @@ class LedgerController extends Controller
     {
         try {
             $this->authorizeModelAction('delete', Ledger::class, $request->id);
-            $res=$this->ledgerService->delete($request->id);
+
+            $fakeRequest = $this->ledgerService
+                ->buildRequest($request->id);
+
+            $res = $this->ledgerService->update(
+                $fakeRequest,
+                $request->id
+            );
+
             return $this->success($res, Ledger::LEDGER_DELETED);
+
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
