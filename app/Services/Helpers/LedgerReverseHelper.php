@@ -13,6 +13,7 @@ use App\Services\AccountPayableService;
 use App\Services\AccountReceiveableService;
 use App\Services\StockService;
 use Faker\Provider\Payment;
+use Illuminate\Validation\Rules\Enum;
 
 class LedgerReverseHelper
 {
@@ -132,13 +133,13 @@ class LedgerReverseHelper
         ])->findOrFail($ledgerId);
         $rate = 0;
         switch ($ledger->ledger_type) {
-            case 'sale':
+            case AppEnum::Sale:
                 if ($ledger->sale) {
                     $rate     = $ledger->sale->rate;
                 }
                 break;
 
-            case 'purchase':
+            case AppEnum::Purchase:
                 if ($ledger->purchase) {
                     $rate     = $ledger->purchase->rate;
                 }
