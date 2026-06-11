@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class AccountRequest extends FormRequest
+{
+    public function all($keys = null)
+    {
+        $data = parent::all();
+        $data['id'] = $this->route('account_id');
+
+        return $data;
+    }
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules()
+    {
+
+        $commonRules = [
+
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:accounts,name'
+            ],
+
+            'type' => [
+                'required',
+                'string',
+                'max:255'
+            ],
+
+            'opening_balance' => [
+                'nullable',
+                'numeric'
+            ],
+
+            'is_active' => [
+                'nullable',
+                'boolean'
+            ]
+        ];
+
+        $ruleId = [
+            'id' => 'required|integer|exists:accounts,id,deleted_at,NULL'
+        ];
+
+        switch ($this->method()) {
+
+            case 'POST':
+                return $commonRules;
+
+            case 'PUT':
+            case 'PATCH':
+                return array_merge(
+                    $ruleId,
+                    $commonRules
+                );
+
+            case 'DELETE':
+                return $ruleId;
+
+            case 'GET':
+                return $ruleId;
+
+            default:
+                return [];
+        }
+    }
+}

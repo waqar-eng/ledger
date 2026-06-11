@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppSettingController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseTypeController;
 use App\Http\Controllers\LedgerController;
@@ -66,6 +68,17 @@ Route::prefix('v1')->group(function () {
             Route::delete('seasons/{season_id}/stocks/{ledger_id}', [StockController::class, 'destroy']);
             Route::post('seasons/{season_id}/stocks', [StockController::class, 'store']);
 
+            Route::get('seasons/{season_id}/businesses', [BusinessController::class, 'index']);
+            Route::get('seasons/{season_id}/businesses/{business_id}', [BusinessController::class, 'show']);
+            Route::put('seasons/{season_id}/businesses/{business_id}', [BusinessController::class, 'update']);
+            Route::delete('seasons/{season_id}/businesses/{business_id}', [BusinessController::class, 'destroy']);
+            Route::post('seasons/{season_id}/businesses', [BusinessController::class, 'store']);
+
+            Route::get('seasons/{season_id}/accounts', [AccountController::class, 'index']);
+            Route::get('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'show']);
+            Route::put('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'update']);
+            Route::delete('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'destroy']);
+            Route::post('seasons/{season_id}/accounts', [AccountController::class, 'store']);
 
             Route::get('seasons/{season_id}/all-users', [UserController::class,'AllUsers']);
         });

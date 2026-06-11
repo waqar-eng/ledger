@@ -62,6 +62,24 @@ class DatabaseSeeder extends Seeder
             'update role',
             'destroy role',
             'manage role',
+            
+            // Business
+            'read business',
+            'index business',
+            'store business',
+            'create business',
+            'show business',
+            'update business',
+            'destroy business',
+            
+            // accounts
+            'read account',
+            'index account',
+            'store account',
+            'create account',
+            'show account',
+            'update account',
+            'destroy account',
 
             // User
             'allPermissions role',

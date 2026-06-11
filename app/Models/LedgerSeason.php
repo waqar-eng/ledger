@@ -18,6 +18,7 @@ class LedgerSeason extends Model
         'start_date',
         'end_date',
         'status',
+        'business_id'
     ];
 
     public static function getActiveSeason(){

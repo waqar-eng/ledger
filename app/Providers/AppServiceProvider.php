@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Policies\LedgerPolicy;
+use App\Repositories\AccountRepository;
 use App\Repositories\AppSettingRepository;
+use App\Repositories\BusinessRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use App\Repositories\Interfaces\LedgerSeasonRepositoryInterface;
@@ -34,7 +36,9 @@ use App\Services\ExpenseService;
 use App\Repositories\Interfaces\ExpenseRepositoryInterface;
 use App\Repositories\ExpenseRepository;
 use App\Repositories\ExpenseTypeRepository;
+use App\Repositories\Interfaces\AccountRepositoryInterface;
 use App\Repositories\Interfaces\AppSettingRepositoryInterface;
+use App\Repositories\Interfaces\BusinessRepositoryInterface;
 use App\Repositories\Interfaces\ExpenseTypeRepositoryInterface;
 // Purchase bindings
 use App\Services\Interfaces\PurchaseServiceInterface;
@@ -54,14 +58,17 @@ use App\Repositories\LedgerSeasonRepository;
 use App\Repositories\Log_activityRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\StockRepository;
+use App\Services\AccountService;
 use App\Services\AppSettingService;
+use App\Services\BusinessService;
 use App\Services\CategoryService;
 use App\Services\Interfaces\AppSettingServiceInterface;
 use App\Services\Interfaces\CategoryServiceInterface;
 //expense-type
 use App\Services\Interfaces\ExpenseTypeServiceInterface;
 use App\Services\ExpenseTypeService;
-
+use App\Services\Interfaces\AccountServiceInterface;
+use App\Services\Interfaces\BusinessServiceInterface;
 use App\Services\Interfaces\Log_activityServiceInterface;
 use App\Services\Interfaces\RoleServiceInterface;
 use App\Services\Interfaces\StockServiceInterface;
@@ -129,5 +136,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LedgerSeasonRepositoryInterface::class, LedgerSeasonRepository::class);
         $this->app->bind(LedgerSeasonServiceInterface::class, LedgerSeasonService::class);
 
+        // business
+        $this->app->bind(BusinessServiceInterface::class, BusinessService::class);
+        $this->app->bind(BusinessRepositoryInterface::class, BusinessRepository::class);
+        
+        // acount
+        $this->app->bind(AccountServiceInterface::class, AccountService::class);
+        $this->app->bind(AccountRepositoryInterface::class, AccountRepository::class);
     }
 }
