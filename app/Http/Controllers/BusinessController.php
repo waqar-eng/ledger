@@ -61,7 +61,7 @@ class BusinessController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(BusinessRequest $request,$season_id,$id)
     {
         try {
             $this->businessService->delete($id);

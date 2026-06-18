@@ -22,6 +22,10 @@ class Account extends Model
     {
         return $this->belongsTo(Business::class);
     }
+    public function ledgerAccounts()
+    {
+        return $this->hasMany(LedgerAccounts::class, 'account_id');
+    }
     public const ACCOUNT_CREATED = 'Account created successfully.';
     public const ACCOUNT_UPDATED = 'Account updated successfully.';
     public const ACCOUNT_DELETED = 'Account deleted successfully.';

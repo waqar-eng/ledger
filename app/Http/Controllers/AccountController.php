@@ -83,4 +83,15 @@ class AccountController extends Controller
             return $this->error($e->getMessage(), 500);
         }
     }
+
+    public function showAccountTransactions(AccountRequest $request, $season_id, $id)
+    {
+        try {
+            $account = $this->accountService->showAccountTransactions($id);
+
+            return $this->success($account);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
 }

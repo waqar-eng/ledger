@@ -88,6 +88,14 @@ public function adjustments()
 {
     return $this->hasMany(Ledger::class, 'parent_id');
 }
+public function season()
+{
+    return $this->belongsTo(LedgerSeason::class, 'ledger_season_id');
+}
+public function accounts()
+{
+    return $this->hasMany(LedgerAccounts::class);
+}
 public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transaction";
 
 public const LEDGER_CREATED= "Ledger created successfully";

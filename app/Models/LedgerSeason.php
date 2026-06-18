@@ -20,7 +20,10 @@ class LedgerSeason extends Model
         'status',
         'business_id'
     ];
-
+    public function business()
+    {
+        return $this->belongsTo(Business::class);
+    }
     public static function getActiveSeason(){
        return self::where('status','active')->first();
     }

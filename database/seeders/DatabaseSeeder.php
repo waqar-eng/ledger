@@ -80,6 +80,7 @@ class DatabaseSeeder extends Seeder
             'show account',
             'update account',
             'destroy account',
+            'showAccountTransactions account',
 
             // User
             'allPermissions role',

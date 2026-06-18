@@ -130,6 +130,7 @@ class LedgerReverseHelper
             'purchase',
             'expense',
             'investment',
+            'accounts'
         ])->findOrFail($ledgerId);
         $rate = 0;
         switch ($ledger->ledger_type) {
@@ -146,6 +147,7 @@ class LedgerReverseHelper
                 break;
         }
         return [
+            'deletion'        => 'true',
             'parent_id'        => $ledger->id,
             'ledger_type'      => $ledger->ledger_type,
             'user_id'          => $ledger->user_id,
@@ -157,6 +159,7 @@ class LedgerReverseHelper
             'quantity'         => 0,
             'rate'             => $rate,
             'bill_no'          => $ledger->bill_no,
+            'accounts'         => $ledger->accounts->toArray()
         ];
     }
 

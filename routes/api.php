@@ -76,6 +76,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('seasons/{season_id}/accounts', [AccountController::class, 'index']);
             Route::get('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'show']);
+            Route::get('seasons/{season_id}/account/{account_id}/transactions', [AccountController::class, 'showAccountTransactions']);
             Route::put('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'update']);
             Route::delete('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'destroy']);
             Route::post('seasons/{season_id}/accounts', [AccountController::class, 'store']);

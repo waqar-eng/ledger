@@ -12,6 +12,7 @@ class AccountPayableService
             $record = AccountPayable::firstOrNew([
                 'user_id' => $request['user_id'],
                 'category_id' => $request['category_id'],
+                'season_id' => $request['season_id'],
             ]);
 
             if (! $isUpdate) {

@@ -78,7 +78,6 @@ class LedgerController extends Controller
 
             $fakeRequest = $this->ledgerService
                 ->buildRequest($request->id);
-
             $res = $this->ledgerService->update(
                 $fakeRequest,
                 $request->id
