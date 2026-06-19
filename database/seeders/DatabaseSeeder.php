@@ -97,6 +97,7 @@ class DatabaseSeeder extends Seeder
             'activeSeason ledger',
             'index appsetting',
             'update appsetting',
+            'receivablePayable ledger',
 
             // Ledger Season
             'read ledgerseason',

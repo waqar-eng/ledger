@@ -404,5 +404,9 @@ class LedgerService extends BaseService implements LedgerServiceInterface
     {
         return $this->query_service->getDashboardSummary($request);
     }
+    public function getReceivablePayable(int $season_id)
+    {
+        return $this->account_payable_service->getReceivablePayable($season_id);
+    }
 
 }

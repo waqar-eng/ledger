@@ -2,6 +2,7 @@
 
 namespace App\Services;
 use App\Models\AccountPayable;
+use App\Models\AccountReceivable;
 use Illuminate\Support\Facades\DB;
 
 class AccountPayableService
@@ -55,5 +56,26 @@ class AccountPayableService
             }
         return $lastAccountPayableBal;
 
+    }
+    public function getReceivablePayable($season_id)
+    {
+        // RECEIVABLE
+        $receivable = AccountReceivable::with('user')->where('season_id', $season_id)->get();
+
+        // PAYABLE
+        $payable = AccountPayable::with('user')->where('season_id', $season_id)->get();
+
+        return [
+            'receivable' => [
+                'total' => $receivable->sum('balance'),
+                'count' => $receivable->count(),
+                'data' => $receivable
+            ],
+            'payable' => [
+                'total' => $payable->sum('balance'),
+                'count' => $payable->count(),
+                'data' => $payable
+            ],
+        ];
     }
 }

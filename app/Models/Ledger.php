@@ -105,6 +105,7 @@ public const UPDATE_RESTRICTED= "Only latest record be able to edit";
 public const LEDGER_TYPE_RESTRICTED= "Ledger type is restricted to edit";
 public const BILL_NUMBER_SUCCESS= "Bill number created successfully";
 public const REPORT_SUCCESS= "Reports fetched successfully";
+public const ACCOUNT_RECEIVABlLE_PAYABLE_SUCCESS= "Account receivable payable fetched successfully";
 public const LEDGER_DELETION_ERROR= "You can only delete record created within the allowed period.";
 public const LEDGER_UPDATION_ERROR= "You can only update record created within the allowed period.";
 public const WALK_IN_BUYER_ACCOUNT_ERROR= "Remaining amount is not allowed for walk-in buyer";

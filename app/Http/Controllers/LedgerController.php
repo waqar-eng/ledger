@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LedgerRequest;
+use App\Http\Requests\ReceivablePayableRequest;
 use App\Models\Ledger;
 use App\Services\Interfaces\LedgerServiceInterface;
 use Exception;
@@ -115,6 +116,15 @@ class LedgerController extends Controller
                 return $this->success($activeSeason, Ledger::ACTIVE_SEASON_SUCCESS);
             else
                 return $this->success('', Ledger::ACTIVE_SEASON_FAILED);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 500);
+        }
+    }
+    public function receivablePayable(ReceivablePayableRequest $request,int $season_id)
+    {
+        try {
+            $report=$this->ledgerService->getReceivablePayable($season_id);
+            return $this->success($report, Ledger::ACCOUNT_RECEIVABlLE_PAYABLE_SUCCESS);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

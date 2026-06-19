@@ -81,6 +81,8 @@ Route::prefix('v1')->group(function () {
             Route::delete('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'destroy']);
             Route::post('seasons/{season_id}/accounts', [AccountController::class, 'store']);
 
+            Route::get('seasons/{season_id}/receivable-payable',[LedgerController::class, 'receivablePayable']);
+
             Route::get('seasons/{season_id}/all-users', [UserController::class,'AllUsers']);
         });
         Route::get('current-user-permissions', [UserController::class,'getUserRolesPermissions']);
