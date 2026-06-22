@@ -32,7 +32,7 @@ class AccountRequest extends FormRequest
                 'unique:accounts,name'
             ],
 
-            'type' => [
+            'description' => [
                 'required',
                 'string',
                 'max:255'

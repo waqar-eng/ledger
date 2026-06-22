@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\AppSettingPeriod;
 use App\Models\AppSetting;
+use App\Models\Business;
 use App\Models\Category;
 use App\Models\LedgerSeason;
 use App\Models\User;
@@ -21,20 +22,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $season = LedgerSeason::firstOrCreate([
-            'name' => 'Default Season'
-        ],[
-            'description' => 'Default Season',
-            'status' => 'active',
-            'start_date' => now(),
-            'end_date' => now()->addMonths(6),
-        ]);
-        // Categories
-        $categories = [
-            ['categoryName' => 'Kapas','season_id' => $season->id, 'created_at' => now(),'updated_at' => now()],
-            ['categoryName' => 'Makai', 'season_id' => $season->id,'created_at' => now(),'updated_at' => now()],
-        ];
-        Category::insert($categories);
+        $seasons = [];
+        $businesses = ['chili', 'cow', 'makai'];
+
+        foreach ($businesses as $businessName) {
+
+            $business = Business::firstOrCreate([
+                'name' => ucfirst($businessName),
+            ]);
+
+            $season[] = LedgerSeason::firstOrCreate(
+                [
+                    'business_id' => $business->id,
+                    'name' => 'season (' . now()->format('M-Y') . ')',
+                ],
+                [
+                    'description' => 'Default Season',
+                    'status' => 'active',
+                    'start_date' => now(),
+                    'end_date' => now()->copy()->addMonths(6),
+                ]
+            );
+        }
+        
         // ✅ Create Permissions
         $permissions = [
             // Dashboard
@@ -184,70 +194,21 @@ class DatabaseSeeder extends Seeder
         }
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'api']);
         $superAdmin->givePermissionTo(Permission::all());
-        // cutomers
-        $cutomers = [
-            [
-                'name' => 'Admin User',
-                'email' => 'admin@zee.com',
-                'phone_number' => '03001034577',
-                'address'=>"admin address",
-                'type'=> 'owner',
-                'password' => Hash::make('admin@zee$#1'),
-                'season_id' => $season->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Investor User',
-                'email' => 'user@zee.com',
-                'phone_number' => '03001034587',
-                'address'=>"investor address",
-                'type'=> 'investor',
-                'password' => Hash::make('112233'),
-                'season_id' => $season->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Walk-in buyer',
-                'email' => 'walk-in-buyer@gmail.com',
-                'phone_number' => '03001034567',
-                'address'=>"walkinbuyer",
-                'type'=>"buyer",
-                'password' => Hash::make('112233'),
-                'season_id' => $season->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Walk-in supplier',
-                'email' => 'walk-in-supplier@gmail.com',
-                'phone_number' => '03001134567',
-                'address'=>"walkinsupplier",
-                'type'=>"supplier",
-                'password' => Hash::make('112233'),
-                'season_id' => $season->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Other User',
-                'email' => 'other@user.com',
-                'phone_number' => '03001234567',
-                'address'=>"other city",
-                'type'=>"other",
-                'password' => Hash::make('112233'),
-                'season_id' => $season->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        // customers
+        $customer =[
+            'name' => 'Admin User',
+            'email' => 'admin@zee.com',
+            'phone_number' => '03001034577',
+            'address'=>"admin address",
+            'type'=> 'owner',
+            'password' => Hash::make('admin@zee$#1'),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
-        foreach ($cutomers as $customer) {
-            User::firstOrCreate(
-                ['email' => $customer['email']], // ✅ unique field
-                $customer // ✅ data to insert if not exists
-            );
-        }
+        User::firstOrCreate(
+            ['email' => $customer['email']], // ✅ unique field
+            $customer // ✅ data to insert if not exists
+        );
         
         $adminUser = User::where('email', 'admin@zee.com')->first();
         $adminUser->assignRole('Super Admin');

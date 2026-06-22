@@ -12,7 +12,7 @@ class Account extends Model
     protected $hidden = ['updated_at'];
     protected $fillable = [
         'name',
-        'type',
+        'description',
         'opening_balance',
         'is_active',
     ];

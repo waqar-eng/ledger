@@ -12,7 +12,7 @@ return new class extends Migration
 
             $table->foreignId('from_account_id')
                 ->nullable()
-                ->after('business_id')
+                ->after('category_id')
                 ->constrained('accounts')
                 ->nullOnDelete();
 
@@ -20,11 +20,6 @@ return new class extends Migration
                 ->nullable()
                 ->after('from_account_id')
                 ->constrained('accounts')
-                ->nullOnDelete();
-
-            $table->foreignId('ledger_category_id')
-                ->nullable()
-                ->constrained('business_categories')
                 ->nullOnDelete();
 
             $table->foreignId('created_by')
@@ -40,7 +35,6 @@ return new class extends Migration
         Schema::table('ledgers', function (Blueprint $table) {
             $table->dropConstrainedForeignId('from_account_id');
             $table->dropConstrainedForeignId('to_account_id');
-            $table->dropConstrainedForeignId('ledger_category_id');
             $table->dropConstrainedForeignId('created_by');
         });
     }
