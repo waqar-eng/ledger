@@ -85,7 +85,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         );
         return $ledger;
       });
-    }  
+    }
     private function handleLedgerType(
         array $request,
         float $amount,
@@ -150,12 +150,12 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 break;
         }
     }
-    
+
     public function find($id)
     {
         $ledger= Ledger::where('id', $id)
             ->with(['category','user','investment', 'investment.adjustments', 'sale','sale.adjustments', 'purchase','purchase.adjustments', 'expense', 'expense.adjustments', 'payment', 'payment.adjustments','adjustments','accounts'])->first();
-        
+
         return $ledger;
     }
     public function buildRequest(int $ledgerId): array
@@ -222,7 +222,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             if(($delta + $latestLedger->total_amount) < 0){
                 throw new \Exception("Not enough blance available. Only {$latestLedger->total_amount } left, & current total is {$delta}");
             }
-            
+
             $paidDelta = 0;
             if ($ledger->ledger_type === AppEnum::Purchase->value && array_key_exists('paid_amount', $request))
             {
@@ -390,7 +390,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
         $count = Ledger::count() ?? 0;
         return $count + 1;
     }
-    
+
     public function activeSeason()
     {
         return LedgerSeason::getActiveSeason();

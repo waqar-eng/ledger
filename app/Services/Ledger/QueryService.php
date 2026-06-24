@@ -20,7 +20,7 @@ class QueryService
         [$start_date, $end_date] = $this->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
         $query = $this->buildQuery($filters, $start_date, $end_date)->withCount('adjustments');
-        
+
         $paginated = $this->getFilteredTransactionsWithBalance($query , $page , $perPage);
         $allData = (clone $query)->get();
         $totals = $this->calculationService->calculateTotals($allData, $filters);
@@ -134,23 +134,61 @@ class QueryService
 
     public function getDashboardSummary($request): array
     {
-        $now = Carbon::now();
-        $season_id = $request['season_id'];
+        $season = LedgerSeason::findOrFail($request['season_id']);
 
-        $daily = Ledger::where('ledger_season_id', $season_id)->whereDate('created_at', $now->toDateString())->get();
-        $monthly = Ledger::where('ledger_season_id', $season_id)->whereMonth('created_at', $now->month)->get();
-        $yearly = Ledger::where('ledger_season_id', $season_id)->whereYear('created_at', $now->year)->get();
-        $formatTotals = fn($collection) => [
+        $ledgers = Ledger::where('ledger_season_id', $season->id)
+            ->orderBy('created_at')
+            ->get();
+
+        if ($ledgers->isEmpty()) {
+            return [];
+        }
+
+        $formatTotals = fn ($collection) => [
             'sales' => $collection->where('ledger_type', 'sale')->sum('amount'),
             'expenses' => $collection->where('ledger_type', 'expense')->sum('amount'),
             'purchases' => $collection->where('ledger_type', 'purchase')->sum('amount'),
             'withdraw' => $collection->where('ledger_type', 'withdraw')->sum('amount'),
+            'investment' => $collection->where('ledger_type', 'investment')->sum('amount'),
+            'payment' => $collection->where('ledger_type', 'payment')->sum('amount'),
+            'receive-payment' => $collection->where('ledger_type', 'receive-payment')->sum('amount'),
         ];
 
-        return [
-                'daily' => $formatTotals($daily),
-                'monthly' => $formatTotals($monthly),
-                'yearly' => $formatTotals($yearly),
-        ];
+        $weeks = [];
+
+        $startDate = Carbon::parse($season->start_date)->startOfDay();
+
+        $endDate = Carbon::parse(
+            $ledgers->max('created_at')
+        )->endOfDay();
+
+        $weekNumber = 1;
+        $weekStart = $startDate->copy();
+
+        while ($weekStart <= $endDate) {
+
+            $weekEnd = $weekStart->copy()->addDays(6)->endOfDay();
+
+            if ($weekEnd->gt($endDate)) {
+                $weekEnd = $endDate->copy()->endOfDay();
+            }
+
+            $weekLedgers = $ledgers->filter(function ($ledger) use ($weekStart, $weekEnd) {
+                $date = Carbon::parse($ledger->created_at);
+                return $date->between($weekStart, $weekEnd);
+            });
+
+            $label =
+                $weekStart->format('d M') .
+                ' - ' .
+                $weekEnd->format('d M Y');
+
+            $weeks[$label] = $formatTotals($weekLedgers);
+
+            $weekStart = $weekEnd->copy()->addSecond();
+            $weekNumber++;
+        }
+
+        return $weeks;
     }
 }

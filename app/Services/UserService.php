@@ -84,9 +84,6 @@ class UserService extends BaseService implements UserServiceInterface
             'accountReceivables' => fn($q) => $q->when($season_id, fn($q) => $q->where('season_id', $season_id)),
             'accountPayables'    => fn($q) => $q->when($season_id, fn($q) => $q->where('season_id', $season_id)),
         ])
-        ->when($season_id, function ($query) use ($season_id) {
-            $query->where('season_id', $season_id);
-        })
         ->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
