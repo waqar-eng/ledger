@@ -134,9 +134,15 @@ class QueryService
 
     public function getDashboardSummary($request): array
     {
+        $from_date = $request->from_date;
+        $to_date = $request->to_date;
         $season = LedgerSeason::findOrFail($request['season_id']);
 
         $ledgers = Ledger::where('ledger_season_id', $season->id)
+            ->whereBetween('date', [
+                $from_date,
+                $to_date
+            ])
             ->orderBy('created_at')
             ->get();
 
@@ -156,11 +162,9 @@ class QueryService
 
         $weeks = [];
 
-        $startDate = Carbon::parse($season->start_date)->startOfDay();
+        $startDate = Carbon::parse($from_date)->startOfDay();
 
-        $endDate = Carbon::parse(
-            $ledgers->max('created_at')
-        )->endOfDay();
+        $endDate = Carbon::parse($to_date)->endOfDay();
 
         $weekNumber = 1;
         $weekStart = $startDate->copy();
