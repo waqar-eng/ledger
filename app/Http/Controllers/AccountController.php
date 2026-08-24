@@ -42,7 +42,7 @@ class AccountController extends Controller
         }
     }
 
-    public function show(AccountRequest $request, $season_id, $id)
+    public function show(AccountRequest $request,  $id)
     {
         try {
             $account = $this->accountService->find($id);
@@ -53,7 +53,7 @@ class AccountController extends Controller
         }
     }
 
-    public function update(AccountRequest $request, $season_id, $id)
+    public function update(AccountRequest $request, $id)
     {
         try {
             $account = $this->accountService->update(
@@ -84,7 +84,7 @@ class AccountController extends Controller
         }
     }
 
-    public function showAccountTransactions(AccountRequest $request, $season_id, $id)
+    public function showAccountTransactions(AccountRequest $request, $id)
     {
         try {
             $account = $this->accountService->showAccountTransactions($id);

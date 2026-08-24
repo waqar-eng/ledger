@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
-        
+
         // ✅ Create Permissions
         $permissions = [
             // Dashboard
@@ -72,7 +72,7 @@ class DatabaseSeeder extends Seeder
             'update role',
             'destroy role',
             'manage role',
-            
+
             // Business
             'read business',
             'index business',
@@ -81,7 +81,7 @@ class DatabaseSeeder extends Seeder
             'show business',
             'update business',
             'destroy business',
-            
+
             // accounts
             'read account',
             'index account',
@@ -108,6 +108,7 @@ class DatabaseSeeder extends Seeder
             'index appsetting',
             'update appsetting',
             'receivablePayable ledger',
+            'interAccountTransfer ledger',
 
             // Ledger Season
             'read ledgerseason',
@@ -209,7 +210,7 @@ class DatabaseSeeder extends Seeder
             ['email' => $customer['email']], // ✅ unique field
             $customer // ✅ data to insert if not exists
         );
-        
+
         $adminUser = User::where('email', 'admin@zee.com')->first();
         $adminUser->assignRole('Super Admin');
         // app settings
@@ -221,6 +222,6 @@ class DatabaseSeeder extends Seeder
             ['key' => 'updation_period'],
             ['value' => AppSettingPeriod::OneWeek->value]
         );
-        
+
     }
 }

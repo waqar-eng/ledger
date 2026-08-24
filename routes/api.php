@@ -27,18 +27,18 @@ Route::prefix('v1')->group(function () {
         Route::get('ledgers/bill-number', [LedgerController::class, 'billNumber']);
         Route::get('active-season', [LedgerController::class, 'activeSeason']);
         Route::middleware('check.active.season')->group(function (){
-            Route::get('seasons/{season_id}/users', [UserController::class, 'index']);
-            Route::get('seasons/{season_id}/users/{user_id}', [UserController::class, 'show']);
-            Route::put('seasons/{season_id}/users/{user_id}', [UserController::class, 'update']);
-            Route::delete('seasons/{season_id}/users/{user_id}', [UserController::class, 'destroy']);
-            Route::post('seasons/{season_id}/users', [UserController::class, 'store']);
+            Route::get('/users', [UserController::class, 'index']);
+            Route::get('/users/{user_id}', [UserController::class, 'show']);
+            Route::put('/users/{user_id}', [UserController::class, 'update']);
+            Route::delete('/users/{user_id}', [UserController::class, 'destroy']);
+            Route::post('/users', [UserController::class, 'store']);
 
             //expense-type
-            Route::get('seasons/{season_id}/expense-type', [ExpenseTypeController::class, 'index']);
-            Route::get('seasons/{season_id}/expense-type/{expense_type}', [ExpenseTypeController::class, 'show']);
-            Route::put('seasons/{season_id}/expense-type/{expense_type}', [ExpenseTypeController::class, 'update']);
-            Route::delete('seasons/{season_id}/expense-type/{expense_type}', [ExpenseTypeController::class, 'destroy']);
-            Route::post('seasons/{season_id}/expense-type', [ExpenseTypeController::class, 'store']);
+            Route::get('/expense-type', [ExpenseTypeController::class, 'index']);
+            Route::get('/expense-type/{expense_type}', [ExpenseTypeController::class, 'show']);
+            Route::put('/expense-type/{expense_type}', [ExpenseTypeController::class, 'update']);
+            Route::delete('/expense-type/{expense_type}', [ExpenseTypeController::class, 'destroy']);
+            Route::post('/expense-type', [ExpenseTypeController::class, 'store']);
 
             //categories
             Route::get('/categories', [CategoryController::class, 'index']);
@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function () {
             Route::put('seasons/{season_id}/ledgers/{ledger_id}', [LedgerController::class, 'update']);
             Route::delete('seasons/{season_id}/ledgers/{ledger_id}', [LedgerController::class, 'destroy']);
             Route::post('seasons/{season_id}/ledgers', [LedgerController::class, 'store']);
+            Route::post('seasons/{season_id}/inter-account-transfer', [LedgerController::class, 'interAccountTransfer']);
 
             //stocks
             Route::get('/stocks', [StockController::class, 'index']);
@@ -74,12 +75,12 @@ Route::prefix('v1')->group(function () {
             Route::delete('/businesses/{business_id}', [BusinessController::class, 'destroy']);
             Route::post('/businesses', [BusinessController::class, 'store']);
 
-            Route::get('seasons/{season_id}/accounts', [AccountController::class, 'index']);
-            Route::get('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'show']);
-            Route::get('seasons/{season_id}/account/{account_id}/transactions', [AccountController::class, 'showAccountTransactions']);
-            Route::put('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'update']);
-            Route::delete('seasons/{season_id}/accounts/{account_id}', [AccountController::class, 'destroy']);
-            Route::post('seasons/{season_id}/accounts', [AccountController::class, 'store']);
+            Route::get('/accounts', [AccountController::class, 'index']);
+            Route::get('/accounts/{account_id}', [AccountController::class, 'show']);
+            Route::get('/account/{account_id}/transactions', [AccountController::class, 'showAccountTransactions']);
+            Route::put('/accounts/{account_id}', [AccountController::class, 'update']);
+            Route::delete('/accounts/{account_id}', [AccountController::class, 'destroy']);
+            Route::post('/accounts', [AccountController::class, 'store']);
 
             Route::get('/receivable-payable',[LedgerController::class, 'receivablePayable']);
 

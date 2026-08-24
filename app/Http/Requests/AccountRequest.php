@@ -23,13 +23,14 @@ class AccountRequest extends FormRequest
     public function rules()
     {
 
+        $id = $this->route('account_id');
         $commonRules = [
 
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                'unique:accounts,name'
+                Rule::unique('accounts', 'name')->ignore($id),
             ],
 
             'description' => [

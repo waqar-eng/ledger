@@ -12,12 +12,13 @@ return new class extends Migration {
             $table->string('bill_no', 255)->nullable();
             $table->enum('type', ['credit', 'debit']);
             $table->date('date')->default(now());
-            $table->enum('ledger_type', ['sale', 'purchase', 'expense', 'investment', 'withdraw' ,'receive-payment','payment' ,'moisture_loss','other']);
+            $table->enum('ledger_type', ['sale', 'purchase', 'expense', 'investment', 'withdraw' ,'receive-payment','payment' ,'moisture_loss','inter_account_transfer','other']);
             $table->decimal('amount', 15, 2)->nullable();
             $table->decimal('total_amount', 15, 2)->nullable();
             $table->enum('payment_method', ['cash', 'bank'])->nullable();
             $table->foreignId( 'user_id')->nullable();
             $table->foreignId( 'category_id');
+            $table->foreignId( 'ledger_season_id')->constrained('ledger_seasons')->cascadeOnDelete();
 
             $table->foreignId('parent_id')->nullable()
             ->constrained('ledgers')->nullOnDelete();

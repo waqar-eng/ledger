@@ -8,6 +8,7 @@ use App\Services\Interfaces\LedgerServiceInterface;
 use App\Models\Ledger;
 use App\Models\Sale;
 use App\Models\Expense;
+use App\Models\InterAccountTransfer;
 use App\Models\Investment;
 use App\Models\LedgerSeason;
 use App\Services\Helpers\LedgerHelper;
@@ -83,6 +84,40 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             $amount,
             $lastQuantity
         );
+        return $ledger;
+      });
+    }
+    public function interAccountTransfer($request)
+    {
+        return DB::transaction(function () use ($request) {
+            $latestLedger = Ledger::where('ledger_season_id', $request['ledger_season_id'])->latest()->first();;
+
+            $this->ledgerAccountService->validateAccountBalances(
+                $request['ledger_type'],
+                $request['accounts'] ?? []
+            );
+        //Step 1: Get the previous total amount from last valid ledger
+        $request['total_amount'] = $latestLedger['total_amount'] ?? 0;
+
+        $data = $request;
+
+        $ledger = Ledger::create($data);
+
+        $request['ledger_id'] = $ledger->id;
+
+        $this->calculation_service->updateInterAccountTransferBalances($request);
+        $this->ledgerAccountService->createInterAccountEntries(
+            $ledger->id,
+            $request ?? []
+        );
+        InterAccountTransfer::create([
+            'from_account_id' => $request['from_account_id'],
+            'to_account_id'   => $request['to_account_id'],
+            'category_id'     => $request['category_id'],
+            'amount'          => $request['amount'],
+            'date'            => $request['date'],
+            'description'     => $request['description'] ?? null,
+        ]);
         return $ledger;
       });
     }
@@ -271,7 +306,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 $receivableDelta = $saleDeltaAmount - $salePaidDelta;
                  if ($receivableDelta != 0) {
                         $this->account_receiveable_service->updateOrInsert([
-                            'season_id'   => $ledger->ledger_season_id,
+                            'season_id'   => $ledger->season_id,
                             'user_id'     => $ledger->user_id,
                             'category_id' => $ledger->category_id,
                             'ledger_id'   => $adjustmentLedger->id,
@@ -299,7 +334,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 if ($ledger->ledger_type === AppEnum::Purchase->value && $hasPurchaseChange) {
                     $purchaseDeltaAmount= $purchaseDeltaAmount ? $purchaseDeltaAmount - $paidDelta : $purchaseDeltaAmount;
                     $this->account_payable_service->updateOrInsert([
-                        'season_id'   => $ledger->ledger_season_id,
+                        'season_id'   => $ledger->season_id,
                         'user_id'   => $ledger->user_id,
                         'category_id' => $ledger->category_id,
                         'ledger_id' => $adjustmentLedger->id,
@@ -358,7 +393,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                 ]);
                 if($ledger->ledger_type==AppEnum::ReceivePayment->value){
                     $this->account_receiveable_service->updateOrInsert([
-                            'season_id'   => $ledger->ledger_season_id,
+                            'season_id'   => $ledger->season_id,
                             'user_id'     => $ledger->user_id,
                             'category_id' => $ledger->category_id,
                             'ledger_id'   => $adjustmentLedger->id,
@@ -366,7 +401,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
                         ], true);
                 }else{
                     $this->account_payable_service->updateOrInsert([
-                            'season_id'   => $ledger->ledger_season_id,
+                            'season_id'   => $ledger->season_id,
                             'user_id'     => $ledger->user_id,
                             'category_id' => $ledger->category_id,
                             'ledger_id'   => $adjustmentLedger->id,

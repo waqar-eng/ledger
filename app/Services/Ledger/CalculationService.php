@@ -89,7 +89,7 @@ class CalculationService
             'total_paid' => $total_paid,
         ]);
     }
-    
+
     public static function ledgerNewTotalAndType($request, $id = null)
     {
         $season_id= $request['ledger_season_id'];
@@ -138,7 +138,7 @@ class CalculationService
             ])
         };
     }
-    
+
     public static function investmentNewTotal($request, $id = null)
     {
         $query = Investment::where('user_id', $request['user_id']);
@@ -196,5 +196,25 @@ class CalculationService
                     (float) ($accountData['amount'] ?? 0) * $multiplier
                 );
         }
+    }
+    public function updateInterAccountTransferBalances(array $request): void
+    {
+        if (
+            empty($request['from_account_id']) ||
+            empty($request['to_account_id']) ||
+            empty($request['amount'])
+        ) {
+            return;
+        }
+
+        $amount = (float) $request['amount'];
+
+        // Deduct from source account
+        Account::where('id', $request['from_account_id'])
+            ->decrement('opening_balance', $amount);
+
+        // Add to destination account
+        Account::where('id', $request['to_account_id'])
+            ->increment('opening_balance', $amount);
     }
 }

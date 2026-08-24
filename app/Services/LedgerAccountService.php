@@ -27,6 +27,27 @@ class LedgerAccountService
 
         LedgerAccounts::insert($splits);
     }
+    public function createInterAccountEntries(int $ledgerId, array $data): void
+    {
+        $entries = [
+            [
+                'ledger_id'  => $ledgerId,
+                'account_id' => $data['from_account_id'],
+                'amount'     => (float) $data['amount'], // Outgoing
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'ledger_id'  => $ledgerId,
+                'account_id' => $data['to_account_id'],
+                'amount'     => (float) $data['amount'], // Incoming
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ];
+
+        LedgerAccounts::insert($entries);
+    }
     public function validateAccountBalances(
         string $ledgerType,
         array $accounts = []
@@ -104,7 +125,7 @@ class LedgerAccountService
                     throw new \Exception(
                         "Insufficient balance in {$account->name}. ".
                         "Available: {$availableBalance}, ".
-                        "Required: {$amount}"   
+                        "Required: {$amount}"
                     );
                 }
             }elseif( in_array($ledgerType, [
@@ -118,7 +139,7 @@ class LedgerAccountService
                     throw new \Exception(
                         "Insufficient balance in {$account->name}. ".
                         "Available: {$availableBalance}, ".
-                        "Required: {$amount}"   
+                        "Required: {$amount}"
                     );
                 }
             }

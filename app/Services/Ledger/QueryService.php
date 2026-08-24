@@ -3,7 +3,9 @@
 namespace App\Services\Ledger;
 
 use App\Constants\AppConstants;
+use App\Models\Account;
 use App\Models\Ledger;
+use App\Models\LedgerAccounts;
 use App\Models\LedgerSeason;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -187,12 +189,53 @@ class QueryService
                 ' - ' .
                 $weekEnd->format('d M Y');
 
-            $weeks[$label] = $formatTotals($weekLedgers);
+            $summary = $formatTotals($weekLedgers);
+
+
+            $weeks[$label] = $summary;
 
             $weekStart = $weekEnd->copy()->addSecond();
             $weekNumber++;
         }
+        $accounts = Account::select('id', 'name', 'opening_balance')->get();
+        $accountSummary = $accounts->map(function ($account) use ($ledgers) {
 
-        return $weeks;
+            $incoming = LedgerAccounts::query()
+                ->where('account_id', $account->id)
+                ->whereHas('ledger', function ($query) {
+                    $query->whereIn('ledger_type', [
+                        'sale',
+                        'investment',
+                        'receive-payment',
+                        'inter_account_transfer'
+                    ]);
+                })
+                ->sum('amount');
+            $outgoing = LedgerAccounts::query()
+                ->where('account_id', $account->id)
+                ->whereHas('ledger', function ($query) {
+                    $query->whereIn('ledger_type', [
+                        'expense',
+                        'purchase',
+                        'payment',
+                        'withdraw',
+                        'inter_account_transfer'
+                    ]);
+                })
+                ->sum('amount');
+
+
+            return [
+                'account_id' => $account->id,
+                'account_name' => $account->name,
+                'opening_balance' => $account->opening_balance,
+                'total_incoming' => $incoming,
+                'total_outgoing' => $outgoing,
+            ];
+        })->values();
+        return [
+            'weekly_summary' => $weeks,
+            'accounts' => $accountSummary,
+        ];
     }
 }
