@@ -17,7 +17,6 @@ class ExpenseTypeService extends BaseService implements ExpenseTypeServiceInterf
             ->when(!empty($filters['season_id']), function ($query) use ($filters) {
                 $query->where('season_id', $filters['season_id']);
             })
-            ->whereNotNull('season_id')
             ->get();
     }
 }

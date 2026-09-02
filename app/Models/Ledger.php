@@ -38,6 +38,10 @@ class Ledger extends Model
     {
         return $this->hasOne(Investment::class);
     }
+    public function interAccountTransfer()
+    {
+        return $this->hasOne(InterAccountTransfer::class);
+    }
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
@@ -88,6 +92,14 @@ public function adjustments()
 {
     return $this->hasMany(Ledger::class, 'parent_id');
 }
+public function season()
+{
+    return $this->belongsTo(LedgerSeason::class, 'ledger_season_id');
+}
+public function accounts()
+{
+    return $this->hasMany(LedgerAccounts::class);
+}
 public const LOW_BALANCE_ERROR= "Insufficient balance to perform this transaction";
 
 public const LEDGER_CREATED= "Ledger created successfully";
@@ -97,6 +109,7 @@ public const UPDATE_RESTRICTED= "Only latest record be able to edit";
 public const LEDGER_TYPE_RESTRICTED= "Ledger type is restricted to edit";
 public const BILL_NUMBER_SUCCESS= "Bill number created successfully";
 public const REPORT_SUCCESS= "Reports fetched successfully";
+public const ACCOUNT_RECEIVABlLE_PAYABLE_SUCCESS= "Account receivable payable fetched successfully";
 public const LEDGER_DELETION_ERROR= "You can only delete record created within the allowed period.";
 public const LEDGER_UPDATION_ERROR= "You can only update record created within the allowed period.";
 public const WALK_IN_BUYER_ACCOUNT_ERROR= "Remaining amount is not allowed for walk-in buyer";

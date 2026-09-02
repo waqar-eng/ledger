@@ -4,12 +4,13 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ExpenseTypeRequest extends FormRequest
+class BusinessRequest extends FormRequest
 {
     public function all($keys = null)
     {
         $data = parent::all();
-        $data['id'] = $this->route('expense_type');
+        $data['id'] = $this->route('business_id');
+
         return $data;
     }
 
@@ -20,13 +21,14 @@ class ExpenseTypeRequest extends FormRequest
 
     public function rules()
     {
-
         $commonRules = [
-            'expenseTypeName' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:businesses,name',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
         ];
 
         $ruleId = [
-            // 'id' => 'required|integer|exists:expense_types,id,deleted_at,NULL'
+            'id' => 'required|integer|exists:businesses,id,deleted_at,NULL'
         ];
 
         switch ($this->method()) {
@@ -34,13 +36,15 @@ class ExpenseTypeRequest extends FormRequest
             case 'POST':
                 return $commonRules;
 
-            case 'GET':
             case 'DELETE':
                 return $ruleId;
 
             case 'PUT':
             case 'PATCH':
                 return array_merge($ruleId, $commonRules);
+
+            case 'GET':
+                return $ruleId;
 
             default:
                 return [];

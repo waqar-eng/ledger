@@ -261,8 +261,13 @@ class LedgerHelper
             ? ($newEffective - $oldEffective)
             : ($oldEffective - $newEffective);
     }
-    public static function createAdjustmentLedger(Ledger $ledger, float $amount, float $total)
+    public static function createAdjustmentLedger(Ledger $ledger, float $amount, float $total,array $request)
     {
+        $isDeletion = (bool) ($request['deletion'] ?? false);
+
+        $description = $isDeletion
+            ? 'Deleted Entry for Type '.$ledger->ledger_type.' #'.$ledger->bill_no
+            : 'Adjustment for Type '.$ledger->ledger_type.' #'.$ledger->bill_no;
         return Ledger::create([
             'parent_id'     => $ledger->id,
             'bill_no'       => $ledger->bill_no,
@@ -271,7 +276,7 @@ class LedgerHelper
             'amount'        => $amount,
             'total_amount' => $total,
             'ledger_season_id'     => $ledger->ledger_season_id,
-            'description'  => 'Adjustment for Type '.$ledger->ledger_type.' #'.$ledger->bill_no,
+            'description'  => $description,
             'user_id'       => $ledger->user_id,
             'category_id'   => $ledger->category_id,
             'created_at'    => now(),

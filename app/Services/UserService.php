@@ -57,23 +57,30 @@ class UserService extends BaseService implements UserServiceInterface
         $search = $filters['search'] ?? '';
 
         $query = User::with([
-            'accountReceivables' => fn($q) => $q->where('season_id', $season_id),
-            'accountPayables' => fn($q) => $q->where('season_id', $season_id),
-            'ledgers' => fn($q) => $q->where('ledger_season_id', $season_id),
-            'sales.ledger' => fn($q) => $q->where('ledger_season_id', $season_id),
-            'purchases.ledger' => fn($q) => $q->where('ledger_season_id', $season_id),
-            'expenses.ledger' => fn($q) => $q->where('ledger_season_id', $season_id),
+                'accountReceivables',
+
+                'accountPayables',
+
+                'ledgers',
+
+                'sales.ledger',
+
+                'purchases.ledger',
+
+                'expenses.ledger',
             ])
-            ->where('season_id', $season_id)
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%")
                     ->orWhere('type', 'like', "%$search%");
                 });
-            })->orderByDesc('id');
-        return $perPage ? $query->paginate($perPage) : $query->get();
+            })
+            ->orderByDesc('id');
+
+            return $perPage
+                ? $query->paginate($perPage)
+                : $query->get();
    }
     public function AllUsers($filters)
     {
@@ -84,9 +91,6 @@ class UserService extends BaseService implements UserServiceInterface
             'accountReceivables' => fn($q) => $q->when($season_id, fn($q) => $q->where('season_id', $season_id)),
             'accountPayables'    => fn($q) => $q->when($season_id, fn($q) => $q->where('season_id', $season_id)),
         ])
-        ->when($season_id, function ($query) use ($season_id) {
-            $query->where('season_id', $season_id);
-        })
         ->when($search, function ($query) use ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
