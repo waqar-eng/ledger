@@ -98,6 +98,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             );
         //Step 1: Get the previous total amount from last valid ledger
         $request['total_amount'] = $latestLedger['total_amount'] ?? 0;
+        $request['bill_no'] = self::billNumber();
 
         $data = $request;
 
@@ -114,6 +115,7 @@ class LedgerService extends BaseService implements LedgerServiceInterface
             'from_account_id' => $request['from_account_id'],
             'to_account_id'   => $request['to_account_id'],
             'category_id'     => $request['category_id'],
+            'ledger_id'          => $ledger->id,
             'amount'          => $request['amount'],
             'date'            => $request['date'],
             'description'     => $request['description'] ?? null,

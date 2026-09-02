@@ -18,7 +18,6 @@ return new class extends Migration {
             $table->enum('payment_method', ['cash', 'bank'])->nullable();
             $table->foreignId( 'user_id')->nullable();
             $table->foreignId( 'category_id');
-            $table->foreignId( 'ledger_season_id')->constrained('ledger_seasons')->cascadeOnDelete();
 
             $table->foreignId('parent_id')->nullable()
             ->constrained('ledgers')->nullOnDelete();

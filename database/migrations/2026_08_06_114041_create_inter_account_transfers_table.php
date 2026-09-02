@@ -14,6 +14,10 @@ return new class extends Migration
         Schema::create('inter_account_transfers', function (Blueprint $table) {
             $table->id();
 
+            $table->foreignId('ledger_id')
+                ->constrained('ledgers')
+                ->cascadeOnDelete();
+
             $table->foreignId('from_account_id')
                 ->constrained('accounts')
                 ->cascadeOnDelete();

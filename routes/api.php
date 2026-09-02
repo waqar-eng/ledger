@@ -82,7 +82,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/accounts/{account_id}', [AccountController::class, 'destroy']);
             Route::post('/accounts', [AccountController::class, 'store']);
 
-            Route::get('/receivable-payable',[LedgerController::class, 'receivablePayable']);
+            Route::get('seasons/{season_id}/receivable-payable',[LedgerController::class, 'receivablePayable']);
 
             Route::get('seasons/{season_id}/all-users', [UserController::class,'AllUsers']);
         });

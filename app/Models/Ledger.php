@@ -38,6 +38,10 @@ class Ledger extends Model
     {
         return $this->hasOne(Investment::class);
     }
+    public function interAccountTransfer()
+    {
+        return $this->hasOne(InterAccountTransfer::class);
+    }
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');

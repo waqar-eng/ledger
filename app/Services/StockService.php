@@ -3,28 +3,31 @@
 namespace App\Services;
 
 use App\AppEnum;
-use App\Constants\AppConstants;
 use App\Models\Stock;
 use App\Repositories\Interfaces\StockRepositoryInterface;
 use App\Services\Interfaces\StockServiceInterface;
-use Illuminate\Support\Facades\Log;
+use App\Services\Ledger\QueryService;
 
 class StockService extends BaseService implements StockServiceInterface
 {
- public function __construct(StockRepositoryInterface $StockRepository)
+
+    public function __construct(
+    StockRepositoryInterface $StockRepository,
+    private QueryService $queryService,
+    )
     {
         parent::__construct($StockRepository);
     }
     public function findAll($filters)
    {
-        [$start_date, $end_date] = app(LedgerService::class)->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
+        [$start_date, $end_date] = $this->queryService->parseDates($filters['start_date'] ?? '', $filters['end_date'] ?? '');
 
         return $this->buildQuery($filters, $start_date, $end_date);
     }
     private function buildQuery(array $filters, $start_date, $end_date)
     {
         return Stock::with(['category'])
-            ->when($start_date && $end_date, fn($q) => app(LedgerService::class)->applyDateFilters($q, $start_date, $end_date))
+            ->when($start_date && $end_date, fn($q) => $this->queryService->applyDateFilters($q, $start_date, $end_date))
 
             ->when(!empty($filters['category_id']), fn($q) =>
             $q->whereHas('category', fn($catQ) =>
