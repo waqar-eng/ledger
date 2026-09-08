@@ -4,5 +4,5 @@ namespace App\Services\Interfaces;
 
 interface AccountServiceInterface extends BaseServiceInterface
 {
-    public function showAccountTransactions(int $id);
+    public function showAccountTransactions(int $season_id, int $id);
 }

@@ -198,10 +198,12 @@ class QueryService
             $weekNumber++;
         }
         $accounts = Account::select('id', 'name', 'opening_balance')->get();
-        $accountSummary = $accounts->map(function ($account) use ($ledgers) {
+        $ledgerIds = $ledgers->pluck('id');
+        $accountSummary = $accounts->map(function ($account) use ($ledgerIds) {
 
             $incoming = LedgerAccounts::query()
                 ->where('account_id', $account->id)
+                ->whereIn('ledger_id', $ledgerIds)
                 ->whereHas('ledger', function ($query) {
                     $query->whereIn('ledger_type', [
                         'sale',
@@ -211,8 +213,10 @@ class QueryService
                     ]);
                 })
                 ->sum('amount');
+
             $outgoing = LedgerAccounts::query()
                 ->where('account_id', $account->id)
+                ->whereIn('ledger_id', $ledgerIds)
                 ->whereHas('ledger', function ($query) {
                     $query->whereIn('ledger_type', [
                         'expense',
@@ -224,7 +228,6 @@ class QueryService
                 })
                 ->sum('amount');
 
-
             return [
                 'account_id' => $account->id,
                 'account_name' => $account->name,
@@ -233,6 +236,7 @@ class QueryService
                 'total_outgoing' => $outgoing,
             ];
         })->values();
+
         return [
             'weekly_summary' => $weeks,
             'accounts' => $accountSummary,
