@@ -25,14 +25,20 @@ class AccountService extends BaseService implements AccountServiceInterface
         $results = $query->orderBy('id', 'desc')->get();
         return $results;
     }
-    
-    public function showAccountTransactions(int $id)
+
+    public function showAccountTransactions(int $season_id, int $id)
     {
         $data['account'] = Account::findOrFail($id);
-        $data['transactions'] = LedgerAccounts::with('ledger','ledger.season.business','ledger.user')
+        $data['transactions'] = LedgerAccounts::with([
+            'ledger',
+            'ledger.season.business',
+            'ledger.user'
+        ])
             ->where('account_id', $id)
-            ->orderBy('id', 'asc')
+            ->whereRelation('ledger', 'ledger_season_id', $season_id)
+            ->orderBy('id', 'DESC')
             ->get();
+
 
         return $data;
     }

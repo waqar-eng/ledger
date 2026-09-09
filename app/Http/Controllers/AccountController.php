@@ -84,10 +84,10 @@ class AccountController extends Controller
         }
     }
 
-    public function showAccountTransactions(AccountRequest $request, $id)
+    public function showAccountTransactions(AccountRequest $request,$season_id, $id)
     {
         try {
-            $account = $this->accountService->showAccountTransactions($id);
+            $account = $this->accountService->showAccountTransactions($season_id,$id);
 
             return $this->success($account);
         } catch (Exception $e) {
