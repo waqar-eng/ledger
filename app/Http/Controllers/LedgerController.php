@@ -133,7 +133,7 @@ class LedgerController extends Controller
     public function receivablePayable(ReceivablePayableRequest $request,int $season_id)
     {
         try {
-            $report=$this->ledgerService->getReceivablePayable($season_id);
+            $report=$this->ledgerService->getReceivablePayable($season_id,$request->all());
             return $this->success($report, Ledger::ACCOUNT_RECEIVABlLE_PAYABLE_SUCCESS);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);

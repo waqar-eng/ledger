@@ -57,25 +57,42 @@ class AccountPayableService
         return $lastAccountPayableBal;
 
     }
-    public function getReceivablePayable($season_id)
+    public function getReceivablePayable(int $season_id, array $request)
     {
+        $userId = $request['user_id'] ?? null;
+
         // RECEIVABLE
-        $receivable = AccountReceivable::with('user')->where('season_id', $season_id)->get();
+        $receivableQuery = AccountReceivable::with('user')
+            ->where('season_id', $season_id);
+
+        if ($userId) {
+            $receivableQuery->where('user_id', $userId);
+        }
+
+        $receivable = $receivableQuery->get();
 
         // PAYABLE
-        $payable = AccountPayable::with('user')->where('season_id', $season_id)->get();
+        $payableQuery = AccountPayable::with('user')
+            ->where('season_id', $season_id);
+
+        if ($userId) {
+            $payableQuery->where('user_id', $userId);
+        }
+
+        $payable = $payableQuery->get();
 
         return [
             'receivable' => [
                 'total' => $receivable->sum('balance'),
                 'count' => $receivable->count(),
-                'data' => $receivable
+                'data' => $receivable,
             ],
             'payable' => [
                 'total' => $payable->sum('balance'),
                 'count' => $payable->count(),
-                'data' => $payable
+                'data' => $payable,
             ],
         ];
     }
+
 }
