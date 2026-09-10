@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\InventoryLogger;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -81,7 +82,11 @@ return [
             'level' => env('LOG_LEVEL', 'critical'),
             'replace_placeholders' => true,
         ],
-
+        'inventory' => [
+            'driver' => 'custom',
+            'via' => InventoryLogger::class,
+            'level' => 'info',
+        ],
         'papertrail' => [
             'driver' => 'monolog',
             'level' => env('LOG_LEVEL', 'debug'),

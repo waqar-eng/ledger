@@ -2,15 +2,12 @@
 
 use App\Http\Middleware\CheckActiveSeason;
 use App\Http\Middleware\CheckPermission;
-use Illuminate\Console\Scheduling\Schedule;
+use App\Http\Middleware\LoggingMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Spatie\Permission\Exceptions\UnauthorizedException;
-use Spatie\Permission\Middleware\PermissionMiddleware;
-use Spatie\Permission\Middleware\RoleMiddleware;
-use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'check.active.season' => CheckActiveSeason::class,
             'check_permission' => CheckPermission::class,
+            'inventory.log' => LoggingMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

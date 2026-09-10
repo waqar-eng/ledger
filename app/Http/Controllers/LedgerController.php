@@ -44,8 +44,11 @@ class LedgerController extends Controller
     public function store(LedgerRequest $request)
     {
         try {
-           $user = $this->ledgerService->create($request->all());
-            return $this->success($user, Ledger::LEDGER_CREATED, 201);
+           $ledger = $this->ledgerService->create($request->all());
+           $request->merge([
+                '_inventory_ledger' => $ledger,
+            ]);
+            return $this->success($ledger, Ledger::LEDGER_CREATED, 201);
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }

@@ -14,6 +14,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StockController;
+use App\Http\Middleware\LoggingMiddleware;
 
 Route::prefix('v1')->group(function () {
     //only login route public
@@ -59,7 +60,9 @@ Route::prefix('v1')->group(function () {
             Route::get('seasons/{season_id}/ledgers/{ledger_id}', [LedgerController::class, 'show']);
             Route::put('seasons/{season_id}/ledgers/{ledger_id}', [LedgerController::class, 'update']);
             Route::delete('seasons/{season_id}/ledgers/{ledger_id}', [LedgerController::class, 'destroy']);
-            Route::post('seasons/{season_id}/ledgers', [LedgerController::class, 'store']);
+            Route::middleware(LoggingMiddleware::class)->group(function () {
+                Route::post('seasons/{season_id}/ledgers', [LedgerController::class, 'store']);
+            });
             Route::post('seasons/{season_id}/inter-account-transfer', [LedgerController::class, 'interAccountTransfer']);
 
             //stocks

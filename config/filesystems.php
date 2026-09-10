@@ -46,6 +46,11 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        'backup' => [
+            'driver' => 'local',
+            'root' => env('BACKUP_PATH_DATABASE', 'F:\\work-space'),
+            'throw' => false,
+        ],
 
         's3' => [
             'driver' => 's3',
